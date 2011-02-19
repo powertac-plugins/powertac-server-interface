@@ -16,7 +16,7 @@
 
 package org.powertac.common.interfaces;
 
-import org.powertac.common.MeterReading;
+import org.powertac.common.TariffTransaction;
 import org.powertac.common.Tariff;
 import org.powertac.common.TariffSubscription;
 import org.powertac.common.Weather;
@@ -68,7 +68,7 @@ public interface Customer {
    * @return real consumption / production of the customer for the timeslot specified in the given {@link Weather}
    * @throws org.powertac.common.exceptions.MeterReadingException thrown if the meter reading fails
    */
-  public MeterReading generateMeterReading(TariffSubscription subscription, Weather weather) throws MeterReadingException;
+  public TariffTransaction generateMeterReading(TariffSubscription subscription, Weather weather) throws MeterReadingException;
 
   /**
    * As soon as this method is called the customer model is required to store / update
