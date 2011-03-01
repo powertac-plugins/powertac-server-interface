@@ -57,58 +57,6 @@ public interface AccountingService {
    */
   public CashUpdate processCashUpdate(CashDoUpdateCmd cashDoUpdateCmd) throws CashUpdateException;
 
-  /**
-   * Processes incoming {@link TariffSpecification} of a broker, and turns it into a Tariff instance.
-   *
-   * @param tariffDoPublishCmd command object that contains the tariff detais to be published
-   * @throws org.powertac.common.exceptions.TariffPublishException is thrown if the tariff publishing fails
-   * @return the published tariff object
-   */
-  public Tariff processTariffPublished(TariffSpecification tariffSpec) throws TariffPublishException;
-
-
-  /**
-   * Method processes incoming {@link TariffDoReplyCmd} of a broker or customer. The main task
-   * of this method is to persistently record the tariffDoReplyCmd and then to forward it
-   * downstream for further processing.
-   *
-   * @param tariffDoReplyCmd the tariff reply to store in the database
-   * @return the latest tariff instance
-   * @throws org.powertac.common.exceptions.TariffReplyException is thrown if the tariff publishing fails
-   */
-  //public Tariff processTariffReply(TariffDoReplyCmd tariffDoReplyCmd) throws TariffReplyException;
-
-  /**
-   * Method processes incoming {@link TariffDoRevokeCmd} of a broker. This method needs to
-   * implement logic that leads to the given tariff being revoked from the list of
-   * published tariffs.
-   *
-   * @param tariffDoRevokeCmd describing the tariff to be revoked
-   * @return Tariff updated tariff object that reflects the revocation of the tariff
-   * @throws org.powertac.common.exceptions.TariffRevokeException is thrown if the tariff publishing fails
-   */
-  public Tariff processTariffRevoke(TariffDoRevokeCmd tariffDoRevokeCmd) throws TariffRevokeException;
-
-
-  /**
-   * Method processes incoming {@link TariffDoSubscribeCmd}. This method implements the
-   * logic required to make a customer subscribe to a particular tariff given either
-   * (i) a published or (ii) an individually agreed tariff instance to subscribe to.<br/>
-   * JEC - commented out until we know what it's for and who calls it
-   *
-   * @param tariffDoSubscribeCmd contains references to the subscribing customer and to the tariff instance to subscribe to
-   * @return List of objects which can include {@link CashUpdate} and {@link Tariff}. The tariff object reflects the subscription of the customer defined in the {@link TariffDoSubscribeCmd} while the (optional) {@link CashUpdate} contains the cash booking of the (optional) signupFee into the broker's cash account
-   * @throws TariffSubscriptionException is thrown if the subscription fails
-   */
-  //public List processTariffSubscribe (TariffDoSubscribeCmd tariffDoSubscribeCmd) throws TariffSubscriptionException;
-
-  /**
-   * Returns a list of all currently active (i.e. subscribeable) tariffs (which might be empty)<br/>
-   * JEC - commented out until we know what it's supposed to do.
-   *
-   * @return a list of all active tariffs, which might be empty if no tariffs are published
-   */
-  //public List<Tariff> publishTariffList();
 
 
   /**
