@@ -18,9 +18,6 @@ package org.powertac.common.interfaces;
 
 import org.powertac.common.Competition;
 import org.powertac.common.Timeslot;
-import org.powertac.common.exceptions.CompetitionFinalizationException;
-import org.powertac.common.exceptions.CompetitionInitializationException;
-import org.powertac.common.exceptions.CompetitionResetException;
 
 /**
  * This interface defines base methods that are
@@ -37,9 +34,8 @@ public interface CompetitionEventAware {
    * to be executed *before* a competition starts into this method.
    *
    * @param competition the competition to be initialized
-   * @throws org.powertac.common.exceptions.CompetitionInitializationException thrown if competition initialization fails
    */
-  public void competitionBeforeStart(Competition competition) throws CompetitionInitializationException;
+  public void competitionBeforeStart(Competition competition);
 
   /**
    * This method is invoked upon competition start.
@@ -47,9 +43,8 @@ public interface CompetitionEventAware {
    * to be executed immediately *after* a competition starts into this method.
    *
    * @param competition the competition just started
-   * @throws org.powertac.common.exceptions.CompetitionInitializationException thrown if competition initialization fails
    */
-  public void competitionAfterStart(Competition competition) throws CompetitionInitializationException;
+  public void competitionAfterStart(Competition competition);
 
   /**
    * This method is invoked immediately before competition end.
@@ -57,18 +52,16 @@ public interface CompetitionEventAware {
    * that needs to be executed immediately *before* a competition is stopped.
    *
    * @param competition the competition to be stopped
-   * @throws org.powertac.common.exceptions.CompetitionFinalizationException thrown if an error occurs during competition shutdown
    */
-  public void competitionBeforeStop(Competition competition) throws CompetitionFinalizationException;
+  public void competitionBeforeStop(Competition competition);
 
   /**
    * Each module implementing this interface should put all business logic here
    * that needs to be executed immediately *after* a competition is stopped.
    *
    * @param competition the competition to be stopped
-   * @throws org.powertac.common.exceptions.CompetitionFinalizationException thrown if an error occurs during competition shutdown
    */
-  public void competitionAfterStop(Competition competition) throws CompetitionFinalizationException;
+  public void competitionAfterStop(Competition competition);
 
   /**
    * This method is triggered upon each timeslot change. Modules should put all business
@@ -85,7 +78,6 @@ public interface CompetitionEventAware {
    * that needs to be executed upon competitionReset of a competition.
    *
    * @param competition the competition to be reset
-   * @throws org.powertac.common.exceptions.CompetitionResetException thrown if an error occurs during competition reset
    */
-  public void competitionReset(Competition competition) throws CompetitionResetException;
+  public void competitionReset(Competition competition);
 }

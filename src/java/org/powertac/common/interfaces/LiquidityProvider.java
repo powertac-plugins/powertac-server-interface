@@ -20,7 +20,6 @@ import org.powertac.common.Competition;
 import org.powertac.common.Product;
 import org.powertac.common.Timeslot;
 import org.powertac.common.TransactionLog;
-import org.powertac.common.exceptions.QuoteCreationException;
 
 import java.util.List;
 
@@ -39,9 +38,8 @@ public interface LiquidityProvider {
    *
    * @param competition the competition to generate quotes for
    * @return List of {@link org.powertac.common.command.ShoutDoCreateCmd}, {@link org.powertac.common.command.ShoutDoUpdateCmd}, and {@link org.powertac.common.command.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
-   * @throws org.powertac.common.exceptions.QuoteCreationException thrown if the quote creation fails
    */
-  public List createAllQuotesFor (Competition competition) throws QuoteCreationException;
+  public List createAllQuotesFor (Competition competition);
 
   /**
    * This is method is called in order to make the LiquidityProvider
@@ -49,9 +47,8 @@ public interface LiquidityProvider {
    *
    * @param transactionLog the transactionLog to respond to
    * @return List of {@link org.powertac.common.command.ShoutDoCreateCmd}, {@link org.powertac.common.command.ShoutDoUpdateCmd}, and {@link org.powertac.common.command.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
-   * @throws org.powertac.common.exceptions.QuoteCreationException thrown if the quote creation fails
    */
-  public List createQuoteFor(TransactionLog transactionLog) throws QuoteCreationException;
+  public List createQuoteFor(TransactionLog transactionLog);
 
   /**
    * This is method is called in order to make the LiquidityProvider
@@ -61,8 +58,7 @@ public interface LiquidityProvider {
    * @param product the product to generate a quote for
    * @param timeslot the timeslot to generate a quote for
    * @return List of {@link org.powertac.common.command.ShoutDoCreateCmd}, {@link org.powertac.common.command.ShoutDoUpdateCmd}, and {@link org.powertac.common.command.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
-   * @throws org.powertac.common.exceptions.QuoteCreationException thrown if the quote creation fails
    */
-  public List createQuoteFor(Product product, Timeslot timeslot) throws QuoteCreationException;
+  public List createQuoteFor(Product product, Timeslot timeslot);
 
 }

@@ -18,7 +18,6 @@ package org.powertac.common.interfaces;
 
 import org.powertac.common.Timeslot;
 import org.powertac.common.Weather;
-import org.powertac.common.exceptions.WeatherDataGenerationException;
 
 import java.util.List;
 
@@ -38,7 +37,6 @@ public interface PhysicalEnvironment {
    * @param currentTimeslot the current timeslot
    * @param targetTimeslots timeslots to generate weather forecasts for
    * @return a list of weather forecast objects
-   * @throws org.powertac.common.exceptions.WeatherDataGenerationException thrown if the generation of weather forecasts fails
    */
-  List<Weather> generateWeatherData(Timeslot currentTimeslot, List<Timeslot> targetTimeslots) throws WeatherDataGenerationException;
+  List<Weather> generateWeatherData(Timeslot currentTimeslot, List<Timeslot> targetTimeslots);
 }

@@ -18,8 +18,6 @@ package org.powertac.common.interfaces;
 
 import org.powertac.common.CashUpdate;
 import org.powertac.common.PositionUpdate;
-import org.powertac.common.TariffSpecification;
-import org.powertac.common.Tariff;
 import org.powertac.common.command.*;
 import org.powertac.common.exceptions.*;
 
@@ -53,11 +51,8 @@ public interface AccountingService {
    * Processes {@link CashDoUpdateCmd} objects adjusting the booked amounts of cash for a specific broker.
    * @param cashDoUpdateCmd the object that describes what cash change to book in the database
    * @return CashUpdate Latest {@link CashUpdate} which contains relative change, new overall balance, origin and reason for the cash update
-   * @throws org.powertac.common.exceptions.CashUpdateException is thrown if a cash update fails
    */
-  public CashUpdate processCashUpdate(CashDoUpdateCmd cashDoUpdateCmd) throws CashUpdateException;
-
-
+  public CashUpdate processCashUpdate(CashDoUpdateCmd cashDoUpdateCmd);
 
   /**
    * Publishes the list of available customers (which might be empty)

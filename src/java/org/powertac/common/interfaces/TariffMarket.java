@@ -19,8 +19,6 @@ package org.powertac.common.interfaces;
 import org.powertac.common.Tariff;
 import org.powertac.common.TariffSpecification;
 import org.powertac.common.command.TariffDoRevokeCmd;
-import org.powertac.common.exceptions.TariffPublishException;
-import org.powertac.common.exceptions.TariffRuleException;
 
 /**
  * Tariff Market Receives, validates, and stores new tariffs, enforces tariff 
@@ -35,21 +33,19 @@ public interface TariffMarket {
    * Processes incoming {@link TariffSpecification} of a broker, 
    * turns it into a Tariff instance, and returns it.
    */
-  public Tariff processTariffPublished(TariffSpecification tariffSpec) throws TariffPublishException;
+  public Tariff processNewTariff(TariffSpecification tariffSpec);
 
   /**
    * Evaluates a given tariff by checking tariff objects against a
    * pre-defined set of commonly agreed PowerTAC market rules. Only
    * tariff objects that comply with these rules can pass this filter.
    *
-   * @param tariff object
-   * @return true just in case tariff is accepted
-   * @throws org.powertac.common.exceptions.TariffRuleException thrown if an error occurs 
+   * Sends a TariffRejectNotification notification back to the broker if an error occurs 
    *   during tariff validation. Note that non-conformant tariffs do *not* cause an 
    *   exception but simply result in "false" being returned. Exceptions should only 
    *   occur of non tariff objects are provided or if, e.g., database access is broken.
    */
-  public boolean acceptTariff(Object tariff) throws TariffRuleException;
+  public boolean acceptTariff(Object tariff);
 
   /**
    * Method processes incoming {@link TariffDoRevokeCmd} of a broker. This method needs to

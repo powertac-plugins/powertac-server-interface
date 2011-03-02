@@ -17,16 +17,8 @@
 package org.powertac.common.interfaces;
 
 import org.powertac.common.TariffTransaction;
-import org.powertac.common.Tariff;
 import org.powertac.common.TariffSubscription;
 import org.powertac.common.Weather;
-import org.powertac.common.command.TariffDoSubscribeCmd;
-import org.powertac.common.exceptions.CustomerInfoGenerationException;
-import org.powertac.common.exceptions.MeterReadingException;
-import org.powertac.common.exceptions.TariffSubscriptionException;
-import org.powertac.common.exceptions.WeatherProcessingException;
-
-import java.util.List;
 
 //import org.powertac.common.command.TariffDoPublishCmd;
 //import org.powertac.common.command.TariffDoReplyCmd;
@@ -37,26 +29,8 @@ import java.util.List;
  * @author Carsten Block
  * @version 0.1 - January 2nd, 2011
  */
-public interface Customer {
-
-  /**
-   * Updates a customer's subscription set.
-   * @param tariffList list of published tariffs
-   * @return A list of tariff subscription records (possibly empty). For customer models with
-   * multi-contracting capabilities, this list can contain several objects, each
-   * representing a subscription of a certain share of the overall customer load / generation
-   * capacity to a particular tariff. 
-   * @throws org.powertac.common.exceptions.TariffSubscriptionException thrown if tariff processing by the customer fails
-   */
-  public List<TariffDoSubscribeCmd> processTariffList(List<Tariff> tariffList) throws TariffSubscriptionException;
-
-  /**
-   * Called when new weather forecasts are available
-   *
-   * @param weatherList new weather forecasts
-   * @throws org.powertac.common.exceptions.WeatherProcessingException thrown if processing of the weather forecasts fails
-   */
-  public void processWeatherForecasts(List<Weather> weatherList) throws WeatherProcessingException;
+public interface Customer 
+{
 
   /**
    * Called to make the customer model produce its "real consumption" / real production
@@ -66,16 +40,14 @@ public interface Customer {
    *
    * @param weather real measured weather data for a particular timeslot
    * @return real consumption / production of the customer for the timeslot specified in the given {@link Weather}
-   * @throws org.powertac.common.exceptions.MeterReadingException thrown if the meter reading fails
    */
-  public TariffTransaction generateMeterReading(TariffSubscription subscription, Weather weather) throws MeterReadingException;
+  public TariffTransaction generateMeterReading(TariffSubscription subscription, Weather weather);
 
   /**
    * As soon as this method is called the customer model is required to store / update
    * its own {@link org.powertac.common.Customer} instance in the database, which is used to publicly report some common properties describing the customer model
    * @see org.powertac.common.Customer
    * @return a customer object that contains customer master data (i.e. a generic description of the customer)
-   * @throws org.powertac.common.exceptions.CustomerInfoGenerationException thrown if the generation of the customer object fails
    */
-  public Customer generateCustomerInfo() throws CustomerInfoGenerationException;
+  public Customer generateCustomerInfo();
 }
