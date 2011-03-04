@@ -16,14 +16,27 @@
 
 package org.powertac.common.interfaces;
 
+import java.util.List;
+
+import org.powertac.common.CustomerInfo;
 import org.powertac.common.Tariff;
 import org.powertac.common.TariffSpecification;
-import org.powertac.common.command.TariffDoRevokeCmd;
+import org.powertac.common.TariffSubscription;
+import org.powertac.common.TariffTransaction;
+import org.powertac.common.enumerations.PowerType;
+import org.powertac.common.msg.TariffExpire;
+import org.powertac.common.msg.TariffRevoke;
+import org.powertac.common.msg.TariffStatus;
+import org.powertac.common.msg.VariableRateUpdate;
 
 /**
  * Tariff Market Receives, validates, and stores new tariffs, enforces tariff 
  * validity rules. Generates transactions to represent tariff publication fees.
  * Provides convenience methods to find tariffs that might be of interest to Customers.
+ * <p>
+ * Note that all methods driven by messages from the incoming message channel are
+ * polymorphic methods that select by argument type at runtime. They all return a 
+ * TariffStatus instance that can be routed back to the originating broker.</p>
  *
  * @author John Collins
  */
@@ -31,50 +44,61 @@ public interface TariffMarket {
 
   /**
    * Processes incoming {@link TariffSpecification} of a broker, 
-   * turns it into a Tariff instance, and returns it.
+   * turns it into a Tariff instance, and validates it. Returns a TariffStatus 
+   * instance that can be routed back to the originating broker.
    */
-  public Tariff processNewTariff(TariffSpecification tariffSpec);
+  public TariffStatus processTariff(TariffSpecification spec);
 
   /**
-   * Evaluates a given tariff by checking tariff objects against a
-   * pre-defined set of commonly agreed PowerTAC market rules. Only
-   * tariff objects that comply with these rules can pass this filter.
-   *
-   * Sends a TariffRejectNotification notification back to the broker if an error occurs 
-   *   during tariff validation. Note that non-conformant tariffs do *not* cause an 
-   *   exception but simply result in "false" being returned. Exceptions should only 
-   *   occur of non tariff objects are provided or if, e.g., database access is broken.
+   * Processes incoming {@link TariffUpdateCmd} from a broker that can be used
+   * to revoke a tariff or change its expiration date.
    */
-  public boolean acceptTariff(Object tariff);
+  public TariffStatus processTariff(TariffExpire update);
 
   /**
-   * Method processes incoming {@link TariffDoRevokeCmd} of a broker. This method needs to
-   * implement logic that leads to the given tariff being revoked from the list of
-   * published tariffs.
-   *
-   * @param tariffDoRevokeCmd describing the tariff to be revoked
-   * @return Tariff updated tariff object that reflects the revocation of the tariff
+   * Processes incoming {@link TariffUpdateCmd} from a broker that can be used
+   * to revoke a tariff or change its expiration date.
    */
-  public Tariff processTariffRevoke(TariffDoRevokeCmd tariffDoRevokeCmd);
+  public TariffStatus processTariff(TariffRevoke update);
 
   /**
-   * Method processes incoming {@link TariffDoSubscribeCmd}. This method implements the
+   * Processes HourlyCharge updates for variable rates.
+   */
+  public TariffStatus processTariff(VariableRateUpdate update);
+  
+  /**
+   * Returns the list of currently active tariffs for the given PowerType.
+   * The list contains only non-expired tariffs that cover the given type.
+   */
+  public List<Tariff> getActiveTariffList(PowerType type);
+  
+  /**
+   * Returns the list of tariffs that have been revoked and have
+   * active subscriptions. Customers are obligated to process this
+   * list by calling handleRevokedTariff() on each such subscription.
+   */
+  public List<TariffSubscription> getRevokedSubscriptionList(CustomerInfo customer);
+  
+  /**
+   * Returns the default tariff.
+   */
+  public Tariff getDefaultTariff (PowerType type);
+  
+  /**
+   * Convenience method to set the default tariff at the beginning of the game
+   */
+  public void setDefaultTariff (Tariff newTariff);
+  
+  /**
+   * Returns the list of unprocessed transactions due to tariff publications.
+   */
+  public List<TariffTransaction> getTransactions ();
+  
+  /**
+   * Processes incoming {@link TariffDoSubscribeCmd}. This method implements the
    * logic required to make a customer subscribe to a particular tariff given either
    * (i) a published or (ii) an individually agreed tariff instance to subscribe to.<br/>
    * JEC - commented out until we know what it's for and who calls it
-   *
-   * @param tariffDoSubscribeCmd contains references to the subscribing customer and to the tariff instance to subscribe to
-   * @return List of objects which can include {@link CashUpdate} and {@link Tariff}. The tariff object reflects the subscription of the customer defined in the {@link TariffDoSubscribeCmd} while the (optional) {@link CashUpdate} contains the cash booking of the (optional) signupFee into the broker's cash account
-   * @throws TariffSubscriptionException is thrown if the subscription fails
    */
   //public List processTariffSubscribe (TariffDoSubscribeCmd tariffDoSubscribeCmd) throws TariffSubscriptionException;
-
-  /**
-   * Returns a list of all currently active (i.e. subscribeable) tariffs (which might be empty)<br/>
-   * JEC - commented out until we know what it's supposed to do.
-   *
-   * @return a list of all active tariffs, which might be empty if no tariffs are published
-   */
-  //public List<Tariff> publishTariffList();
-
 }

@@ -32,14 +32,14 @@ public interface DistributionUtility {
   /**
    * This method is invoked in order to make the distribution utility detect and
    * balance power differences for the given timeslot. As a result the distribution
-   * utility produces a list of {@link org.powertac.common.command.PositionDoUpdateCmd} and
-   * {@link org.powertac.common.command.CashDoUpdateCmd} objects that describe the bookings
+   * utility produces a list of {@link org.powertac.common.msg.PositionDoUpdateCmd} and
+   * {@link org.powertac.common.msg.CashDoUpdateCmd} objects that describe the bookings
    * required to balance overall energy consumption and overall energy production for the
    * given timeslot as well as the resulting payments for those brokers who cause potential
    * imbalances.
    *
    * @param currentTimeslot the timeslot to compute the balancing for
-   * @return a list of {@link org.powertac.common.command.PositionDoUpdateCmd} and {@link org.powertac.common.command.CashDoUpdateCmd} objects
+   * @return a list of {@link org.powertac.common.msg.PositionDoUpdateCmd} and {@link org.powertac.common.msg.CashDoUpdateCmd} objects
    */
   List balanceTimeslot(Timeslot currentTimeslot);
 

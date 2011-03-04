@@ -17,7 +17,7 @@
 package org.powertac.common.interfaces;
 
 import org.powertac.common.Competition;
-import org.powertac.common.command.CashDoUpdateCmd;
+import org.powertac.common.msg.CashDoUpdateCmd;
 
 import java.util.List;
 

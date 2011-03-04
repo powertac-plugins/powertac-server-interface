@@ -17,13 +17,13 @@
 package org.powertac.common.interfaces;
 
 import org.powertac.common.Shout;
-import org.powertac.common.command.ShoutDoCreateCmd;
-import org.powertac.common.command.ShoutDoDeleteCmd;
-import org.powertac.common.command.ShoutDoUpdateCmd;
 import org.powertac.common.exceptions.MarketClearingException;
 import org.powertac.common.exceptions.ShoutCreationException;
 import org.powertac.common.exceptions.ShoutDeletionException;
 import org.powertac.common.exceptions.ShoutUpdateException;
+import org.powertac.common.msg.ShoutDoCreateCmd;
+import org.powertac.common.msg.ShoutDoDeleteCmd;
+import org.powertac.common.msg.ShoutDoUpdateCmd;
 
 import java.util.List;
 

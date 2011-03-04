@@ -20,8 +20,8 @@ import org.powertac.common.TariffTransaction;
 import org.powertac.common.TariffSubscription;
 import org.powertac.common.Weather;
 
-//import org.powertac.common.command.TariffDoPublishCmd;
-//import org.powertac.common.command.TariffDoReplyCmd;
+//import org.powertac.common.msg.TariffDoPublishCmd;
+//import org.powertac.common.msg.TariffDoReplyCmd;
 
 /**
  * Interface that specifies common methods a Customer module needs to implement.

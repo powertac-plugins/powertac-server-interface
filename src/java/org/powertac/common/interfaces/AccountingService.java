@@ -18,8 +18,8 @@ package org.powertac.common.interfaces;
 
 import org.powertac.common.CashUpdate;
 import org.powertac.common.PositionUpdate;
-import org.powertac.common.command.*;
 import org.powertac.common.exceptions.*;
+import org.powertac.common.msg.*;
 
 import java.util.List;
 
@@ -56,9 +56,9 @@ public interface AccountingService {
 
   /**
    * Publishes the list of available customers (which might be empty)
-   *
+   * JEC - I don't know what this is for, who would call it, or why it's part of AccountingService
    * @return a list of all available customers, which might be empty if no customers are available
    */
-  public List<Customer> publishCustomersAvailable();
+  //public List<Customer> publishCustomersAvailable();
 
 }

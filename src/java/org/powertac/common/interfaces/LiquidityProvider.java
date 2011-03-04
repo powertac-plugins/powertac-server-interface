@@ -37,7 +37,7 @@ public interface LiquidityProvider {
    * in all timeslots of a particular competition
    *
    * @param competition the competition to generate quotes for
-   * @return List of {@link org.powertac.common.command.ShoutDoCreateCmd}, {@link org.powertac.common.command.ShoutDoUpdateCmd}, and {@link org.powertac.common.command.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
+   * @return List of {@link org.powertac.common.msg.ShoutDoCreateCmd}, {@link org.powertac.common.msg.ShoutDoUpdateCmd}, and {@link org.powertac.common.msg.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
    */
   public List createAllQuotesFor (Competition competition);
 
@@ -46,7 +46,7 @@ public interface LiquidityProvider {
    * module respond to a specific transaction that occurred in the market.
    *
    * @param transactionLog the transactionLog to respond to
-   * @return List of {@link org.powertac.common.command.ShoutDoCreateCmd}, {@link org.powertac.common.command.ShoutDoUpdateCmd}, and {@link org.powertac.common.command.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
+   * @return List of {@link org.powertac.common.msg.ShoutDoCreateCmd}, {@link org.powertac.common.msg.ShoutDoUpdateCmd}, and {@link org.powertac.common.msg.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
    */
   public List createQuoteFor(TransactionLog transactionLog);
 
@@ -57,7 +57,7 @@ public interface LiquidityProvider {
    *
    * @param product the product to generate a quote for
    * @param timeslot the timeslot to generate a quote for
-   * @return List of {@link org.powertac.common.command.ShoutDoCreateCmd}, {@link org.powertac.common.command.ShoutDoUpdateCmd}, and {@link org.powertac.common.command.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
+   * @return List of {@link org.powertac.common.msg.ShoutDoCreateCmd}, {@link org.powertac.common.msg.ShoutDoUpdateCmd}, and {@link org.powertac.common.msg.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
    */
   public List createQuoteFor(Product product, Timeslot timeslot);
 
