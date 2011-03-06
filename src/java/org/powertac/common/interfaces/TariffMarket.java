@@ -85,9 +85,10 @@ public interface TariffMarket {
   public Tariff getDefaultTariff (PowerType type);
   
   /**
-   * Convenience method to set the default tariff at the beginning of the game
+   * Convenience method to set the default tariff at the beginning of the game.
+   * Returns true just in case the tariff was valid and was successfully saved.
    */
-  public void setDefaultTariff (Tariff newTariff);
+  public boolean setDefaultTariff (TariffSpecification newTariff);
   
   /**
    * Returns the list of unprocessed transactions due to tariff publications.
