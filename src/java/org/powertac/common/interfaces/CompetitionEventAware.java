@@ -64,15 +64,6 @@ public interface CompetitionEventAware {
   public void competitionAfterStop(Competition competition);
 
   /**
-   * This method is triggered upon each timeslot change. Modules should put all business
-   * logic here that needs to be executed upon timeslot change
-   *
-   * @param competition the currently running competition
-   * @param newCurrentTimeslot the new current (i.e. "now" timeslot)
-   */
-  public void competitionOnTimeslotChange(Competition competition, Timeslot newCurrentTimeslot);
-
-  /**
    * This method is invoked after the competition end if the competiton is competitionReset.
    * Each module implementing this interface should put all business logic here
    * that needs to be executed upon competitionReset of a competition.

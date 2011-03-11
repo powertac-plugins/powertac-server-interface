@@ -42,6 +42,7 @@ import org.powertac.common.msg.VariableRateUpdate;
  */
 public interface TariffMarket {
 
+  // --------------- Broker API ---------------------
   /**
    * Processes incoming {@link TariffSpecification} of a broker, 
    * turns it into a Tariff instance, and validates it. Returns a TariffStatus 
@@ -65,6 +66,21 @@ public interface TariffMarket {
    * Processes HourlyCharge updates for variable rates.
    */
   public TariffStatus processTariff(VariableRateUpdate update);
+
+  // -------------------- Customer API ------------------------
+  /**
+   * Subscribes a block of Customers from a single Customer model to
+   * the specified Tariff, as long as the Tariff has not expired. If the
+   * subscription succeeds, then the TariffSubscription instance is
+   * return, otherwise null.
+   * <p>
+   * Note that you cannot unsubscribe directly from a Tariff -- you have to do
+   * that from the TariffSubscription that represents the Tariff you want
+   * to unsubscribe from.</p>
+   */
+  TariffSubscription subscribeToTariff (Tariff tariff,
+                                        CustomerInfo customer, 
+                                        int customerCount);
   
   /**
    * Returns the list of currently active tariffs for the given PowerType.

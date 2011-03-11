@@ -16,11 +16,6 @@
 
 package org.powertac.common.interfaces;
 
-import org.powertac.common.Competition;
-import org.powertac.common.msg.CashDoUpdateCmd;
-
-import java.util.List;
-
 /**
  * TaxAuthority interface defines how a tax authority module
  * can tax brokers during PowerTAC competition.
@@ -34,11 +29,11 @@ public interface TaxAuthority {
    * @param competition the competition in which brokers should be taxed
    * @return List of CashDoUpdateCmd objects specifying which brokers to tax for which purpose. This list can then be processed by the accounting service who does the actual booking of the cash changes
    */
-  public List<CashDoUpdateCmd> taxBrokers(Competition competition);
+  public void taxBrokers();
 
   /**
    * @param competition the competition in which brokers should be subsidized
    * @return List of CashDoUpdateCmd objects specifying which brokers to subsidise and for which purpose. This list can then be processed by the accounting service who does the actual booking of the cash changes
    */
-  public List<CashDoUpdateCmd> subsidiseBrokers(Competition competition);
+  public void subsidiseBrokers();
 }

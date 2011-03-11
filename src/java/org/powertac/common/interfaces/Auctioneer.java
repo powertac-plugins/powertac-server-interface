@@ -17,15 +17,6 @@
 package org.powertac.common.interfaces;
 
 import org.powertac.common.Shout;
-import org.powertac.common.exceptions.MarketClearingException;
-import org.powertac.common.exceptions.ShoutCreationException;
-import org.powertac.common.exceptions.ShoutDeletionException;
-import org.powertac.common.exceptions.ShoutUpdateException;
-import org.powertac.common.msg.ShoutDoCreateCmd;
-import org.powertac.common.msg.ShoutDoDeleteCmd;
-import org.powertac.common.msg.ShoutDoUpdateCmd;
-
-import java.util.List;
 
 /**
  * Interface that defines the publicly accessible methods
@@ -34,7 +25,8 @@ import java.util.List;
  * @author Carsten Block
  * @version 0.1, Date: 01.12.10
  */
-public interface Auctioneer {
+public interface Auctioneer extends TimeslotPhaseProcessor
+{
 
   /**
    * Process an incoming shout, e.g. by matching it against existing shouts
@@ -45,41 +37,35 @@ public interface Auctioneer {
    * and execution process.
    * <p/>
    * In both cases orderbook updates, quote updates, shout status updates etc may be created
-   * and returned in a list so that other components (e.g. {@link AccountingService})
+   * and returned in a list so that other components (e.g. {@link Accounting})
    * can further process these objects later on.
-   *
-   * @param shoutDoCreate new incoming shout from a broker
-   * @return List of objects, which might include {@link org.powertac.common.CashUpdate}, {@link org.powertac.common.PositionUpdate}, {@link org.powertac.common.Orderbook},{@link org.powertac.common.TransactionLog},{@link Shout}. These may then processed further "downstream" in the server, e.g. by accounting service
-   * @throws org.powertac.common.exceptions.ShoutCreationException thrown if the creation of the new shout fails
    */
-  List processShoutCreate(ShoutDoCreateCmd shoutDoCreate) throws ShoutCreationException;
+  public void processShout(Shout shout); // throws ShoutCreationException;
 
   /**
    * Deletes the shout specified by {@link Shout}
    *
    * @param shoutDoDeleteCmd command object that contains the shoutId that should be deleted
-   * @return List of objects, which can consist of {@link Shout} (deleted shout object), {@link org.powertac.common.TransactionLog}, {@link org.powertac.common.Orderbook}
+   * @return List of objects, which can consist of {@link Shout} (deleted shout object), {@link org.powertac.common.MarketTransaction}, {@link org.powertac.common.Orderbook}
    * @throws org.powertac.common.exceptions.ShoutDeletionException thrown if the shout deletion fails
    */
-  List processShoutDelete(ShoutDoDeleteCmd shoutDoDeleteCmd) throws ShoutDeletionException;
+  //List processShoutDelete(ShoutDoDeleteCmd shoutDoDeleteCmd) throws ShoutDeletionException;
 
   /**
    * Updates the shout specified by the {@link ShoutDoUpdateCmd}. Changeable
    * shout attributes are limit price and quantity only.
    *
    * @param shoutDoUpdateCmd the shout object to update
-   * @return a List of objects, which can include {@link org.powertac.common.CashUpdate}, {@link org.powertac.common.PositionUpdate}, {@link org.powertac.common.Orderbook},{@link org.powertac.common.TransactionLog}, {@link Shout} (matched / partially matched shout object), or an empty list.
+   * @return a List of objects, which can include {@link org.powertac.common.CashUpdate}, {@link org.powertac.common.PositionUpdate}, {@link org.powertac.common.Orderbook},{@link org.powertac.common.MarketTransaction}, {@link Shout} (matched / partially matched shout object), or an empty list.
    * @throws org.powertac.common.exceptions.ShoutUpdateException thrown if the shout update fails
    */
-  List processShoutUpdate(ShoutDoUpdateCmd shoutDoUpdateCmd) throws ShoutUpdateException;
+  //List processShoutUpdate(ShoutDoUpdateCmd shoutDoUpdateCmd) throws ShoutUpdateException;
 
   /**
    * This method is required for periodic clearing auctions and essentially tells
-   * the Auctioneer module to clear the market matching all open shouts in the orderbooks
-   *
-   * @return a list of objects, which can include {@link org.powertac.common.CashUpdate}, {@link org.powertac.common.PositionUpdate}, {@link org.powertac.common.Orderbook},{@link org.powertac.common.TransactionLog}, {@link Shout} (matched / partially matched shout object), or an empty list.
-   * @throws org.powertac.common.exceptions.MarketClearingException thrown if the market clearing fails
+   * the Auctioneer module to clear the market matching all open shouts in the orderbooks.
+   * Resulting transactions are created by calling addMarketTransaction() on the Accounting service.
    */
-  List clearMarket() throws MarketClearingException;
+  public void clearMarket();
 
 }

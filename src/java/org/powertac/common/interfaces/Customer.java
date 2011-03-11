@@ -17,7 +17,7 @@
 package org.powertac.common.interfaces;
 
 import org.powertac.common.TariffTransaction;
-import org.powertac.common.TariffSubscription;
+//import org.powertac.common.TariffSubscription;
 import org.powertac.common.Weather;
 
 //import org.powertac.common.msg.TariffDoPublishCmd;
@@ -41,7 +41,7 @@ public interface Customer
    * @param weather real measured weather data for a particular timeslot
    * @return real consumption / production of the customer for the timeslot specified in the given {@link Weather}
    */
-  public TariffTransaction generateMeterReading(TariffSubscription subscription, Weather weather);
+  //public TariffTransaction generateMeterReading(TariffSubscription subscription, Weather weather);
 
   /**
    * As soon as this method is called the customer model is required to store / update

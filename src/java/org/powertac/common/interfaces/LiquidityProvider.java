@@ -19,7 +19,7 @@ package org.powertac.common.interfaces;
 import org.powertac.common.Competition;
 import org.powertac.common.Product;
 import org.powertac.common.Timeslot;
-import org.powertac.common.TransactionLog;
+import org.powertac.common.MarketTransaction;
 
 import java.util.List;
 
@@ -45,10 +45,10 @@ public interface LiquidityProvider {
    * This is method is called in order to make the LiquidityProvider
    * module respond to a specific transaction that occurred in the market.
    *
-   * @param transactionLog the transactionLog to respond to
+   * @param marketTransaction the transactionLog to respond to
    * @return List of {@link org.powertac.common.msg.ShoutDoCreateCmd}, {@link org.powertac.common.msg.ShoutDoUpdateCmd}, and {@link org.powertac.common.msg.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
    */
-  public List createQuoteFor(TransactionLog transactionLog);
+  public List createQuoteFor(MarketTransaction marketTransaction);
 
   /**
    * This is method is called in order to make the LiquidityProvider
