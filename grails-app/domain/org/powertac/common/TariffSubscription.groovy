@@ -106,9 +106,9 @@ class TariffSubscription {
     // post the signup bonus
     if (tariff.signupPayment != 0.0) {
       println "signup bonus: ${customerCount} customers, total = ${customerCount * tariff.getSignupPayment()}"
-      accountingService.addTariffTransaction(txType: TariffTransactionType.SIGNUP,
-          customer: customerInfo, customerCount: customerCount, tariff: tariff, subscription: this,
-          charge: customerCount * tariff.getSignupPayment())
+      accountingService.addTariffTransaction(TariffTransactionType.SIGNUP,
+          tariff, customerInfo, customerCount, 0.0,
+          customerCount * tariff.getSignupPayment())
     }
     this.save()
   }
@@ -140,9 +140,9 @@ class TariffSubscription {
     customersCommitted -= customerCount
     // Post early-withdrawal penalties
     if (tariff.earlyWithdrawPayment != 0.0 && penaltyCount > 0) {
-      AccountingService.addTariffTransaction(txType: TariffTransactionType.WITHDRAW,
-          customer: customerInfo, customerCount: customerCount, tariff: tariff, subscription: this,
-          charge: penaltyCount * tariff.getEarlyWithdrawPayment())
+      accountingService.addTariffTransaction(TariffTransactionType.WITHDRAW,
+          tariff, customerInfo, customerCount, 0.0,
+          penaltyCount * tariff.getEarlyWithdrawPayment())
     }
     this.save()
   }
@@ -184,10 +184,9 @@ class TariffSubscription {
   {
     // generate the usage transaction
     def txType = amount < 0 ? TariffTransactionType.PRODUCE: TariffTransactionType.CONSUME
-    accountingService.addTariffTransaction(txType: txType,
-        customer: customerInfo, customerCount: customersCommitted,
-        tariff: tariff, amount: amount,
-        charge: customersCommitted * tariff.getUsageCharge(amount / customersCommitted, totalUsage, true))
+    accountingService.addTariffTransaction(txType, tariff,
+        customerInfo, customersCommitted, amount: amount,
+        customersCommitted * tariff.getUsageCharge(amount / customersCommitted, totalUsage, true))
     if (timeService.getHourOfDay() == 0) {
       //reset the daily usage counter
       totalUsage = 0.0
@@ -196,9 +195,9 @@ class TariffSubscription {
     // generate the periodic payment if necessary
     if (tariff.periodicPayment != 0.0) {
       tariff.addPeriodicPayment()
-      accountingService.addTariffTransaction(txType: TariffTransactionType.PERIODIC,
-          customer: customerInfo, customerCount: customersCommitted, tariff: tariff, subscription: this,
-          charge: customersCommitted * tariff.getPeriodicPayment())
+      accountingService.addTariffTransaction(TariffTransactionType.PERIODIC,
+          tariff, customerInfo, customersCommitted,
+          customersCommitted * tariff.getPeriodicPayment())
     }
     assert this.save()
   }
