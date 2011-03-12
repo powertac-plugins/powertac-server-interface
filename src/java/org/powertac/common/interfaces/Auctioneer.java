@@ -56,7 +56,7 @@ public interface Auctioneer extends TimeslotPhaseProcessor
    * shout attributes are limit price and quantity only.
    *
    * @param shoutDoUpdateCmd the shout object to update
-   * @return a List of objects, which can include {@link org.powertac.common.CashUpdate}, {@link org.powertac.common.PositionUpdate}, {@link org.powertac.common.Orderbook},{@link org.powertac.common.MarketTransaction}, {@link Shout} (matched / partially matched shout object), or an empty list.
+   * @return a List of objects, which can include {@link org.powertac.common.CashPosition}, {@link org.powertac.common.PositionUpdate}, {@link org.powertac.common.Orderbook},{@link org.powertac.common.MarketTransaction}, {@link Shout} (matched / partially matched shout object), or an empty list.
    * @throws org.powertac.common.exceptions.ShoutUpdateException thrown if the shout update fails
    */
   //List processShoutUpdate(ShoutDoUpdateCmd shoutDoUpdateCmd) throws ShoutUpdateException;

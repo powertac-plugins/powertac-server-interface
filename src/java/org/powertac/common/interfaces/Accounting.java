@@ -16,12 +16,14 @@
 
 package org.powertac.common.interfaces;
 
+import org.powertac.common.Broker;
 import org.powertac.common.CustomerInfo;
 import org.powertac.common.MarketTransaction;
 import org.powertac.common.Product;
 import org.powertac.common.Tariff;
 import org.powertac.common.TariffTransaction;
 import org.powertac.common.enumerations.TariffTransactionType;
+import java.util.List;
 
 import java.math.BigDecimal;
 
@@ -55,4 +57,16 @@ public interface Accounting extends TimeslotPhaseProcessor
   TariffTransaction addTariffTransaction (TariffTransactionType txType, Tariff tariff, 
                                           CustomerInfo customer, int customerCount,
                                           BigDecimal amount, BigDecimal charge);
+  
+  /**
+   * Returns the current set of unprocessed TariffTransactions for a specific Broker. 
+   * This is needed to run the balancing process.
+   */
+  List<TariffTransaction> getTariffTransactions (Broker broker);
+  
+  /**
+   * Returns the market position for the current timeslot for a given broker. Needed 
+   * to run the balancing process.
+   */
+  BigDecimal getCurrentNetMktPosition (Broker broker);
 }
