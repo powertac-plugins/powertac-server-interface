@@ -27,6 +27,7 @@ import org.joda.time.Instant;
  */
 public interface TimeslotPhaseProcessor
 {
+  
   /**
    * This method gets called once during each timeslot. To get called, the
    * module must first call the register(phaseNumber) method on CompetitionControl.

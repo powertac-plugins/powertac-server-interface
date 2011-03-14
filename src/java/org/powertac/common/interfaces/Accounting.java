@@ -22,6 +22,7 @@ import org.powertac.common.MarketTransaction;
 import org.powertac.common.Product;
 import org.powertac.common.Tariff;
 import org.powertac.common.TariffTransaction;
+import org.powertac.common.Timeslot;
 import org.powertac.common.enumerations.TariffTransactionType;
 import java.util.List;
 
@@ -41,15 +42,16 @@ import java.math.BigDecimal;
  *
  * @author John Collins
  */
-public interface Accounting extends TimeslotPhaseProcessor
+public interface Accounting
 {
   /**
    * Adds a market transaction that includes both a cash component
-   * and a product commitment
+   * and a product commitment for a specific timeslot.
    */
-  MarketTransaction addMarketTransaction (Product product,
-                                          BigDecimal positionChange,
-                                          BigDecimal cashChange);
+  MarketTransaction addMarketTransaction (Broker broker,
+                                          Timeslot timeslot,
+                                          BigDecimal price,
+                                          BigDecimal quantity);
 
   /**
    * Adds a tariff transaction to the current-day transaction list.
@@ -59,14 +61,14 @@ public interface Accounting extends TimeslotPhaseProcessor
                                           BigDecimal amount, BigDecimal charge);
   
   /**
-   * Returns the current set of unprocessed TariffTransactions for a specific Broker. 
-   * This is needed to run the balancing process.
+   * Returns the current net load represented by unprocessed TariffTransactions for a 
+   * specific Broker. This is needed to run the balancing process.
    */
-  List<TariffTransaction> getTariffTransactions (Broker broker);
+  BigDecimal getCurrentNetLoad (Broker broker);
   
   /**
    * Returns the market position for the current timeslot for a given broker. Needed 
    * to run the balancing process.
    */
-  BigDecimal getCurrentNetMktPosition (Broker broker);
+  BigDecimal getCurrentMarketPosition (Broker broker);
 }

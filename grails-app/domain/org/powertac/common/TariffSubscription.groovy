@@ -180,23 +180,23 @@ class TariffSubscription {
    * (positive amount), along with the credit/debit that results. Also generates
    * a separate TariffTransaction for the fixed periodic payment if it's non-zero.
    */
-  void usePower (double amount)
+  void usePower (double quantity)
   {
     // generate the usage transaction
-    def txType = amount < 0 ? TariffTransactionType.PRODUCE: TariffTransactionType.CONSUME
+    def txType = quantity < 0 ? TariffTransactionType.PRODUCE: TariffTransactionType.CONSUME
     accountingService.addTariffTransaction(txType, tariff,
-        customerInfo, customersCommitted, amount: amount,
-        customersCommitted * tariff.getUsageCharge(amount / customersCommitted, totalUsage, true))
+        customerInfo, customersCommitted, quantity,
+        customersCommitted * tariff.getUsageCharge(quantity / customersCommitted, totalUsage, true))
     if (timeService.getHourOfDay() == 0) {
       //reset the daily usage counter
       totalUsage = 0.0
     }
-    totalUsage += amount / customersCommitted
+    totalUsage += quantity / customersCommitted
     // generate the periodic payment if necessary
     if (tariff.periodicPayment != 0.0) {
       tariff.addPeriodicPayment()
       accountingService.addTariffTransaction(TariffTransactionType.PERIODIC,
-          tariff, customerInfo, customersCommitted,
+          tariff, customerInfo, customersCommitted, 0.0,
           customersCommitted * tariff.getPeriodicPayment())
     }
     assert this.save()
