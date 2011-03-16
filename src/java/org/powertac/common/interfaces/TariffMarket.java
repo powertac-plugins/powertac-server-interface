@@ -112,10 +112,7 @@ public interface TariffMarket {
   public List<TariffTransaction> getTransactions ();
   
   /**
-   * Processes incoming {@link TariffDoSubscribeCmd}. This method implements the
-   * logic required to make a customer subscribe to a particular tariff given either
-   * (i) a published or (ii) an individually agreed tariff instance to subscribe to.<br/>
-   * JEC - commented out until we know what it's for and who calls it
+   * Registers a listener for publication of new Tariffs.
    */
-  //public List processTariffSubscribe (TariffDoSubscribeCmd tariffDoSubscribeCmd) throws TariffSubscriptionException;
+  public void registerNewTariffListener (NewTariffListener listener);
 }
