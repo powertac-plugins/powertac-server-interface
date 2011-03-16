@@ -16,12 +16,7 @@
 
 package org.powertac.common.interfaces;
 
-import org.powertac.common.TariffTransaction;
-//import org.powertac.common.TariffSubscription;
-import org.powertac.common.Weather;
-
-//import org.powertac.common.msg.TariffDoPublishCmd;
-//import org.powertac.common.msg.TariffDoReplyCmd;
+import org.powertac.common.CustomerInfo;
 
 /**
  * Interface that specifies common methods a Customer module needs to implement.
@@ -49,5 +44,5 @@ public interface Customer
    * @see org.powertac.common.Customer
    * @return a customer object that contains customer master data (i.e. a generic description of the customer)
    */
-  public Customer generateCustomerInfo();
+  public CustomerInfo generateCustomerInfo();
 }
