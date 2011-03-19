@@ -37,7 +37,7 @@ class TariffSubscription {
   String id = IdGenerator.createId()
   
   /** The customer who has this Subscription */
-  AbstractCustomer abstractCustomer
+  AbstractCustomer customer
   
   
   /** Total number of customers within a customer model that are committed 
@@ -64,7 +64,7 @@ class TariffSubscription {
   static constraints = {
     id(nullable: false, blank: false, unique: true)
     //competition(nullable: false)
-    abstractCustomer(nullable: false)
+    customer(nullable: false)
     customersCommitted(min: 0)
     expirations(nullable: true)
   }
@@ -143,7 +143,7 @@ class TariffSubscription {
     // Post early-withdrawal penalties
     if (tariff.earlyWithdrawPayment != 0.0 && penaltyCount > 0) {
       accountingService.addTariffTransaction(TariffTransactionType.WITHDRAW,
-          tariff, abstractCustomer, customerCount, 0.0,
+          tariff, customer, customerCount, 0.0,
           penaltyCount * tariff.getEarlyWithdrawPayment())
     }
     this.save(flush:true)
@@ -171,7 +171,7 @@ class TariffSubscription {
 	  
 		
       TariffSubscription result =
-          tariffMarketService.subscribeToTariff(newTariff, abstractCustomer, customersCommitted)
+          tariffMarketService.subscribeToTariff(newTariff, customer, customersCommitted)
       log.info "Tariff ${tariff.id} superseded by ${newTariff.id} for ${customersCommitted} customers"
       customersCommitted = 0
       assert this.save(flush:true)
@@ -189,7 +189,7 @@ class TariffSubscription {
     // generate the usage transaction
     def txType = quantity < 0 ? TariffTransactionType.PRODUCE: TariffTransactionType.CONSUME
     accountingService.addTariffTransaction(txType, tariff,
-        abstractCustomer, customersCommitted, quantity,
+        customer, customersCommitted, quantity,
         customersCommitted * tariff.getUsageCharge(quantity / customersCommitted, totalUsage, true))
     if (timeService.getHourOfDay() == 0) {
       //reset the daily usage counter
@@ -200,7 +200,7 @@ class TariffSubscription {
     if (tariff.periodicPayment != 0.0) {
       tariff.addPeriodicPayment()
       accountingService.addTariffTransaction(TariffTransactionType.PERIODIC,
-          tariff, abstractCustomer, customersCommitted, 0.0,
+          tariff, customer, customersCommitted, 0.0,
           customersCommitted * tariff.getPeriodicPayment())
     }
     assert this.save(flush:true)
