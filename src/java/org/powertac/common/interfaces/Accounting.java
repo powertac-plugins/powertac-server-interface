@@ -16,6 +16,7 @@
 
 package org.powertac.common.interfaces;
 
+import org.powertac.common.AbstractCustomer;
 import org.powertac.common.Broker;
 import org.powertac.common.CustomerInfo;
 import org.powertac.common.MarketTransaction;
@@ -57,7 +58,7 @@ public interface Accounting
    * Adds a tariff transaction to the current-day transaction list.
    */
   TariffTransaction addTariffTransaction (TariffTransactionType txType, Tariff tariff, 
-                                          CustomerInfo customer, int customerCount,
+                                          AbstractCustomer customer, int customerCount,
                                           BigDecimal amount, BigDecimal charge);
   
   /**

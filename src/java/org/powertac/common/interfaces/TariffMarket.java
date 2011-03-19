@@ -18,8 +18,8 @@ package org.powertac.common.interfaces;
 
 import java.util.List;
 
-import org.powertac.common.CustomerInfo;
 import org.powertac.common.Tariff;
+import org.powertac.common.AbstractCustomer;
 import org.powertac.common.TariffSpecification;
 import org.powertac.common.TariffSubscription;
 import org.powertac.common.TariffTransaction;
@@ -79,7 +79,7 @@ public interface TariffMarket {
    * to unsubscribe from.</p>
    */
   TariffSubscription subscribeToTariff (Tariff tariff,
-                                        CustomerInfo customer, 
+                                        AbstractCustomer customer, 
                                         int customerCount);
   
   /**
@@ -93,7 +93,7 @@ public interface TariffMarket {
    * active subscriptions. Customers are obligated to process this
    * list by calling handleRevokedTariff() on each such subscription.
    */
-  public List<TariffSubscription> getRevokedSubscriptionList(CustomerInfo customer);
+  public List<TariffSubscription> getRevokedSubscriptionList(AbstractCustomer customer);
   
   /**
    * Returns the default tariff.
@@ -114,5 +114,5 @@ public interface TariffMarket {
   /**
    * Registers a listener for publication of new Tariffs.
    */
-  public void registerNewTariffListener (NewTariffListener listener);
+  // public void registerNewTariffListener (NewTariffListener listener);
 }
