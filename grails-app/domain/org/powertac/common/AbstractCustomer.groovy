@@ -41,7 +41,7 @@ class AbstractCustomer {
 		
 		name (blank: false, unique: true)
 		customerType(nullable: false)
-		powerType(nullable: false)
+		powerType(nullable: true)
 		publishedTariffs(nullable:true)
 		multiContracting (nullable: false)
 		canNegotiate (nullable: false)
