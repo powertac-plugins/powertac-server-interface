@@ -109,10 +109,10 @@ class TariffSubscription {
     if (tariff.signupPayment != 0.0) {
       println "signup bonus: ${customerCount} customers, total = ${customerCount * tariff.getSignupPayment()}"
       accountingService.addTariffTransaction(TariffTransactionType.SIGNUP,
-          tariff, customer, customerCount, 0.0,
+          tariff, customer.customerInfo, customerCount, 0.0,
           customerCount * tariff.getSignupPayment())
     }
-    this.save(flush:true)
+    this.save()
   }
   
   /**
@@ -143,10 +143,10 @@ class TariffSubscription {
     // Post early-withdrawal penalties
     if (tariff.earlyWithdrawPayment != 0.0 && penaltyCount > 0) {
       accountingService.addTariffTransaction(TariffTransactionType.WITHDRAW,
-          tariff, customer, customerCount, 0.0,
+          tariff, customer.customerInfo, customerCount, 0.0,
           penaltyCount * tariff.getEarlyWithdrawPayment())
     }
-    this.save(flush:true)
+    this.save()
   }
   
   /**
@@ -174,7 +174,7 @@ class TariffSubscription {
           tariffMarketService.subscribeToTariff(newTariff, customer, customersCommitted)
       log.info "Tariff ${tariff.id} superseded by ${newTariff.id} for ${customersCommitted} customers"
       customersCommitted = 0
-      assert this.save(flush:true)
+      assert this.save()
       return result
   }
 
@@ -189,7 +189,7 @@ class TariffSubscription {
     // generate the usage transaction
     def txType = quantity < 0 ? TariffTransactionType.PRODUCE: TariffTransactionType.CONSUME
     accountingService.addTariffTransaction(txType, tariff,
-        customer, customersCommitted, quantity,
+        customer.customerInfo, customersCommitted, quantity,
         customersCommitted * tariff.getUsageCharge(quantity / customersCommitted, totalUsage, true))
     if (timeService.getHourOfDay() == 0) {
       //reset the daily usage counter
@@ -200,10 +200,10 @@ class TariffSubscription {
     if (tariff.periodicPayment != 0.0) {
       tariff.addPeriodicPayment()
       accountingService.addTariffTransaction(TariffTransactionType.PERIODIC,
-          tariff, customer, customersCommitted, 0.0,
+          tariff, customer.customerInfo, customersCommitted, 0.0,
           customersCommitted * tariff.getPeriodicPayment())
     }
-    assert this.save(flush:true)
+    assert this.save()
   }
   
   /**

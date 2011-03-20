@@ -3,67 +3,83 @@ package org.powertac.common
 
 import java.util.List;
 import org.powertac.common.interfaces.NewTariffListener
-import org.powertac.common.enumerations.CustomerType;
-import org.powertac.common.enumerations.PowerType;
 
 class AbstractCustomer {
 
 	def timeService
 	def tariffMarketService
 	
-	/** Name of the customer model */
-	String name
+	/** The id of the Abstract Customer */
+	String id
   
-	/** gives a "rough" classification what type of customer to expect based on an enumeration, i.e. a fixed set of customer types */
-	CustomerType customerType
+	/** The Customer specifications*/
+	CustomerInfo customerInfo
 	
 	/** The list of the published tariffs, pusblished and refreshed within a certain period */
 	List<Tariff> publishedTariffs = []
-	
-	PowerType powerType
-  
-	/** describes whether or not this customer engages in multiple contracts at the same time */
-	Boolean multiContracting = false
-  
-	/** describes whether or not this customer negotiates over contracts */
-	Boolean canNegotiate = false
   
 	/** >0: max power consumption (think consumer with fuse limit); <0: min power production (think nuclear power plant with min output) */
 	BigDecimal upperPowerCap = 100.0
   
 	/** >0: min power consumption (think refrigerator); <0: max power production (think power plant with max capacity) */
 	BigDecimal lowerPowerCap = 0.0
+
+	/** >=0 - gram CO2 per kW/h */
+	BigDecimal carbonEmissionRate = 0.0
+  
+	/** measures how wind changes translate into load / generation changes of the customer */
+	BigDecimal windToPowerConversion = 0.0
+  
+	/** measures how temperature changes translate into load / generation changes of the customer */
+	BigDecimal tempToPowerConversion = 0.0
+  
+	/** measures how sun intensity changes translate into load /generation changes of the customer */
+	BigDecimal sunToPowerConversion = 0.0
+	
+	//TODO: Possibly add parameters as the ones below that provide descriptive statistical information on historic power consumption / production of the customer
+	/*
+	BigDecimal annualPowerAvg // >0: customer is on average a consumer; <0 customer is on average a producer
+	private BigDecimal minResponsiveness // define factor characterizing minimal responsiveness to price signals, i.e. "elasticity"
+  
+	private BigDecimal maxResponsiveness;   // define factor characterizing max responsiveness to price signals, i.e. "elasticity"
+	*/
 	
 	/** The subscriptions the customer is under at anytime. Must be at least one, beginning with the default tariff */
 	static hasMany = [subscriptions: TariffSubscription]
 	
     static constraints = {
 		
-		name (blank: false, unique: true)
-		customerType(nullable: false)
-		powerType(nullable: true)
+		id(nullable: false, blank: false)
+		customerInfo(nullable: false)
 		publishedTariffs(nullable:true)
-		multiContracting (nullable: false)
-		canNegotiate (nullable: false)
 		upperPowerCap (nullable: false, scale: Constants.DECIMALS)
 		lowerPowerCap (nullable: false, scale: Constants.DECIMALS)
-		
+		subscriptions (nullable:true)
+		//powerType(nullable: true)
+		//multiContracting (nullable: false)
+		//canNegotiate (nullable: false)
     }
 	
-	public String toString() {
-		return name
+	static mapping = {
+		id (generator: 'assigned')
 	  }
+	
+	static auditable = true
+	
+	public String toString() {
+		return id + customerInfo.getName()
+	}
 	
 	/** The initialization actions. We can add more
 	 * Subscribe to the default tariff for the beginning of the game */
 	void init(){
 		
+		this.id = customerInfo.getId()
+
 		def listener = [publishNewTariffs:{tariffList -> publishedTariffs = tariffList }] as NewTariffListener
 		tariffMarketService.registerNewTariffListener(listener)
-		
-		this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariffMarketService.getDefaultTariff(powerType), this, 1))
-		println(subscriptions.toString())
-		this.save(flush:true)
+		this.save()
+	
 	}
 
 	/** The first implementation of the tariff selection function. 
@@ -74,15 +90,18 @@ class AbstractCustomer {
 		
 		if (flag){
 			
-			available = tariffMarketService.getActiveTariffList(powerType)
+			available = tariffMarketService.getActiveTariffList(customerInfo.powerType)
+			println(available.toString())
 		}
 		else {
 		 
 			available = publishedTariffs
 		}
-			
+		
+
 		int ran = available.size() * Math.random()
 		println(ran);
+
 		return available.get(ran)
 		
 	}
@@ -107,22 +126,30 @@ class AbstractCustomer {
 	
 	}
 	
+	void subscribeDefault(){
+		
+		this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariffMarketService.getDefaultTariff(customerInfo.powerType), this, 1))
+		
+		this.save()
+		
+	}
+	
 	/** Unsubscribing the current subscription */
 		
 	void unsubscribeCurrent(){
 		
-		if (multiContracting == false && subscriptions.size() == 1){
+		if (customerInfo.multiContracting == false && subscriptions.size() == 1){
 		
 		
 			subscriptions.each {
 			
 					it.unsubscribe(1)
 					removeFromSubscriptions(it)
-					it.save(flush:true)					
+					it.save()					
 			}
 		}
 		
-	this.save(flush:true)	
+	this.save()	
 	}
 	
 	/** Unsubscribing a certain subscription */
@@ -130,8 +157,8 @@ class AbstractCustomer {
 		
 		ts.unsubscribe(1)
 		removeFromSubscriptions(ts)
-		ts.save(flush:true)
-		this.save(flush:true)
+		ts.save()
+		this.save()
 	}
 	
 	
@@ -140,15 +167,18 @@ class AbstractCustomer {
 	void checkRevokedSubscriptions(){
 		
 		List<TariffSubscription> revoked = tariffMarketService.getRevokedSubscriptionList(this)
+		println(revoked.toString())
 		
-		println(revoked.size())
+		println("Revoked Size: " + revoked.size())
 		
 		revoked.each {
 			
 			TariffSubscription ts = it.handleRevokedTariff()
 			unsubscribe(it)
+		
+			println(ts.toString())					
 			this.addToSubscriptions(ts)
-			this.save(flush:true)
+			this.save()
 		}
 		
 	}
@@ -159,9 +189,9 @@ class AbstractCustomer {
 	
 			this.unsubscribeCurrent()
 			this.addToSubscriptions(tariffMarketService.subscribeToTariff(this.SelectTariff(flag), this, 1))
-			this.save(flush:true)
+			this.save()
 		
 	}
+			
 	
-		
 }

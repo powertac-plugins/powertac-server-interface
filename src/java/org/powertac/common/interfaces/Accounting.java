@@ -58,7 +58,7 @@ public interface Accounting
    * Adds a tariff transaction to the current-day transaction list.
    */
   TariffTransaction addTariffTransaction (TariffTransactionType txType, Tariff tariff, 
-                                          AbstractCustomer customer, int customerCount,
+                                          CustomerInfo customer, int customerCount,
                                           BigDecimal amount, BigDecimal charge);
   
   /**
