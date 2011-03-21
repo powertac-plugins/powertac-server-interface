@@ -3,6 +3,7 @@
 *.ipr
 *.iws
 .idea/
+.settings/
 
 # Deployment directories
 target/
