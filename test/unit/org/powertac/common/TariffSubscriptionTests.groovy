@@ -26,7 +26,7 @@ class TariffSubscriptionTests extends GrailsUnitTestCase
     tariffSubscription.id = null
     assertFalse(tariffSubscription.validate())
     assertEquals('nullable', tariffSubscription.errors.getFieldError('id').getCode())
-    assertEquals('nullable', tariffSubscription.errors.getFieldError('customerInfo').getCode())
+    assertEquals('nullable', tariffSubscription.errors.getFieldError('customer').getCode())
     assertEquals('nullable', tariffSubscription.errors.getFieldError('tariff').getCode())
   }
 }

@@ -32,11 +32,13 @@ class TariffSubscription {
 
   def timeService // autowire time service
   def accountingService // autowire accounting service
+  def tariffMarketService
 
   String id = IdGenerator.createId()
   
   /** The customer who has this Subscription */
-  CustomerInfo customerInfo
+  AbstractCustomer customer
+  
   
   /** Total number of customers within a customer model that are committed 
    * to this tariff subscription. This needs to be a count, otherwise tiered 
@@ -62,7 +64,7 @@ class TariffSubscription {
   static constraints = {
     id(nullable: false, blank: false, unique: true)
     //competition(nullable: false)
-    customerInfo(nullable: false)
+    customer(nullable: false)
     customersCommitted(min: 0)
     expirations(nullable: true)
   }
@@ -107,7 +109,7 @@ class TariffSubscription {
     if (tariff.signupPayment != 0.0) {
       println "signup bonus: ${customerCount} customers, total = ${customerCount * tariff.getSignupPayment()}"
       accountingService.addTariffTransaction(TariffTransactionType.SIGNUP,
-          tariff, customerInfo, customerCount, 0.0,
+          tariff, customer.customerInfo, customerCount, 0.0,
           customerCount * tariff.getSignupPayment())
     }
     this.save()
@@ -141,7 +143,7 @@ class TariffSubscription {
     // Post early-withdrawal penalties
     if (tariff.earlyWithdrawPayment != 0.0 && penaltyCount > 0) {
       accountingService.addTariffTransaction(TariffTransactionType.WITHDRAW,
-          tariff, customerInfo, customerCount, 0.0,
+          tariff, customer.customerInfo, customerCount, 0.0,
           penaltyCount * tariff.getEarlyWithdrawPayment())
     }
     this.save()
@@ -161,13 +163,15 @@ class TariffSubscription {
     }
     // if the tariff has already been superseded, then switch subscription to
     // that new tariff
-    Tariff newTariff = tariff.isSupersededBy 
+    Tariff newTariff = tariff.isSupersededBy
     if (newTariff == null) {
       // there is no superseding tariff, so we have to revert to the default tariff.
-      newTariff = tariffMarketService.getDefaultTariff
+      newTariff = tariffMarketService.getDefaultTariff(tariff.tariffSpec.powerType)
     }
+	  
+		
       TariffSubscription result =
-          newTariff.subscribe(customerInfo, customersCommitted)
+          tariffMarketService.subscribeToTariff(newTariff, customer, customersCommitted)
       log.info "Tariff ${tariff.id} superseded by ${newTariff.id} for ${customersCommitted} customers"
       customersCommitted = 0
       assert this.save()
@@ -185,7 +189,7 @@ class TariffSubscription {
     // generate the usage transaction
     def txType = quantity < 0 ? TariffTransactionType.PRODUCE: TariffTransactionType.CONSUME
     accountingService.addTariffTransaction(txType, tariff,
-        customerInfo, customersCommitted, quantity,
+        customer.customerInfo, customersCommitted, quantity,
         customersCommitted * tariff.getUsageCharge(quantity / customersCommitted, totalUsage, true))
     if (timeService.getHourOfDay() == 0) {
       //reset the daily usage counter
@@ -196,7 +200,7 @@ class TariffSubscription {
     if (tariff.periodicPayment != 0.0) {
       tariff.addPeriodicPayment()
       accountingService.addTariffTransaction(TariffTransactionType.PERIODIC,
-          tariff, customerInfo, customersCommitted, 0.0,
+          tariff, customer.customerInfo, customersCommitted, 0.0,
           customersCommitted * tariff.getPeriodicPayment())
     }
     assert this.save()

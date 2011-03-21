@@ -16,6 +16,7 @@
 
 package org.powertac.common.interfaces;
 
+import org.powertac.common.AbstractCustomer;
 import org.powertac.common.Broker;
 import org.powertac.common.CustomerInfo;
 import org.powertac.common.MarketTransaction;
