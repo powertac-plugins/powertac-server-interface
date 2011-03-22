@@ -82,30 +82,56 @@ class AbstractCustomer {
 	
 	}
 
-	/** The first implementation of the tariff selection function. 
-	 * This is a random chooser of the available tariffs, totally insensitive*/
-	Tariff SelectTariff(boolean flag){
+	/** Function utilized at the beginning in order to subscribe to the default tariff */
+	void subscribeDefault(){
 		
-		List<Tariff> available
+		this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariffMarketService.getDefaultTariff(customerInfo.powerType), this, 1))
 		
-		if (flag){
-			
-			available = tariffMarketService.getActiveTariffList(customerInfo.powerType)
-			println(available.toString())
-		}
-		else {
-		 
-			available = publishedTariffs
-		}
-		
-
-		int ran = available.size() * Math.random()
-		println(ran);
-
-		return available.get(ran)
+		this.save()
 		
 	}
 	
+	/** Subscribing certain subscription */
+	void subscribe(Tariff tariff, int customercount){
+		
+		this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariff, this, customercount))
+		tariff.save()
+		this.save()
+		
+	}
+	
+	/** Unsubscribing certain subscription */
+	void unsubscribe(Tariff tariff, int customerCount){
+		
+		TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
+		
+		ts.unsubscribe(customerCount)
+		this.removeFromSubscriptions(ts)
+		tariff.save()
+		ts.save()
+		this.save()
+	}
+	
+	/** Subscribing certain subscription */
+	void subscribe(TariffSubscription ts){
+		
+		ts.subscribe(ts.customersCommitted)
+		this.addToSubscriptions(ts)
+		ts.save()
+		this.save()
+		
+	}
+	
+	/** Unsubscribing certain subscription */
+	void unsubscribe(TariffSubscription ts){
+		
+		ts.unsubscribe(ts.customersCommitted)
+		this.removeFromSubscriptions(ts)
+		ts.save()
+		this.save()
+	}
+	
+
 	/** The first implementation of the power consumption function.
 	 *  I utilized the mean consumption of a neighborhood of households with a random variable */
 	void consumePower(){
@@ -126,72 +152,74 @@ class AbstractCustomer {
 	
 	}
 	
-	void subscribeDefault(){
-		
-		this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariffMarketService.getDefaultTariff(customerInfo.powerType), this, 1))
-		
-		this.save()
-		
-	}
-	
-	/** Unsubscribing the current subscription */
-		
-	void unsubscribeCurrent(){
-		
-		if (customerInfo.multiContracting == false && subscriptions.size() == 1){
-		
-		
-			subscriptions.each {
-			
-					it.unsubscribe(1)
-					removeFromSubscriptions(it)
-					it.save()					
-			}
-		}
-		
-	this.save()	
-	}
-	
-	/** Unsubscribing a certain subscription */
-	void unsubscribe(TariffSubscription ts){
-		
-		ts.unsubscribe(1)
-		removeFromSubscriptions(ts)
-		ts.save()
-		this.save()
-	}
-	
-	
-	
-	/** The first implementation of the checking for revoked subscriptions function.*/
-	void checkRevokedSubscriptions(){
-		
-		List<TariffSubscription> revoked = tariffMarketService.getRevokedSubscriptionList(this)
-		println(revoked.toString())
-		
-		println("Revoked Size: " + revoked.size())
-		
-		revoked.each {
-			
-			TariffSubscription ts = it.handleRevokedTariff()
-			unsubscribe(it)
-		
-			println(ts.toString())					
-			this.addToSubscriptions(ts)
-			this.save()
-		}
-		
-	}
-	
+
 	/** The first implementation of the changing subscription function.
 	* There are going to be many cases in the more detailed and complex models. */
-	void changeSubscription(boolean flag) {
+	void changeSubscription(Tariff tariff, boolean flag) {
 	
-			this.unsubscribeCurrent()
+			TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
+		
+			this.unsubscribe(tariff, ts.customersCommitted)
 			this.addToSubscriptions(tariffMarketService.subscribeToTariff(this.SelectTariff(flag), this, 1))
 			this.save()
 		
 	}
-			
+	
+		
+	/** The first implementation of the tariff selection function.
+	* This is a random chooser of the available tariffs, totally insensitive*/
+   Tariff SelectTariff(boolean flag){
+	   
+	   List<Tariff> available
+	   int ran, index
+	   if (flag){
+		   
+		   available = tariffMarketService.getActiveTariffList(customerInfo.powerType)
+		   println(available.toString())
+		   index = available.indexOf(tariffMarketService.getDefaultTariff(customerInfo.powerType))
+		   println("Index of Default Tariff:" + index)
+	   }
+	   else {
+		
+		   available = publishedTariffs
+		   index = available.indexOf(this.subscriptions?.tariff)
+		   println("Index of Current Tariff:" + index)
+	   }
+	   
+	   
+	   ran = index
+	   
+	   while ( ran == index){
+		   ran = available.size() * Math.random()
+		   println(ran);
+	   }
+	   
+	   return available.get(ran)
+	   
+   }
+	
+   
+   /** The first implementation of the checking for revoked subscriptions function.*/
+   void checkRevokedSubscriptions(){
+	   
+	   List<TariffSubscription> revoked = tariffMarketService.getRevokedSubscriptionList(this)
+	   println(revoked.toString())
+	   
+	   println("Revoked Size: " + revoked.size())
+	   
+	   revoked.each {
+		   
+		   TariffSubscription ts = it.handleRevokedTariff()
+		   this.unsubscribe(it)
+	   
+		   println(ts.toString())
+		   this.subscribe(ts)
+		   ts.save()
+		   this.save()
+	   }
+	   
+   }
+   
+	
 	
 }

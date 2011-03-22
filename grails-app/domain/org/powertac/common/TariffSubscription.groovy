@@ -203,7 +203,7 @@ class TariffSubscription {
           tariff, customer.customerInfo, customersCommitted, 0.0,
           customersCommitted * tariff.getPeriodicPayment())
     }
-    assert this.save()
+    this.save()
   }
   
   /**
