@@ -18,6 +18,8 @@ package org.powertac.common.interfaces;
 
 import org.powertac.common.Broker;
 
+import java.util.List;
+
 /**
  * BrokerProxy is responsible for handling in- and outgoing communication with brokers
  *
@@ -31,7 +33,17 @@ public interface BrokerProxy {
   void sendMessage(Broker broker, Object messageObject);
 
   /**
+   * Sends a list of messages to a specific broker
+   */
+  void sendMessages(Broker broker, List<?> messageObjects);
+
+  /**
    * Send a message to all brokers
    */
   void broadcastMessage(Object messageObject);
+
+  /**
+   * Sends a list of messages to all brokers
+   */
+  void broadcastMessages(List<?> messageObjects);
 }
