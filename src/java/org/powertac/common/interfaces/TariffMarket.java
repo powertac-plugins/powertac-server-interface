@@ -114,5 +114,5 @@ public interface TariffMarket {
   /**
    * Registers a listener for publication of new Tariffs.
    */
-  // public void registerNewTariffListener (NewTariffListener listener);
+  public void registerNewTariffListener (NewTariffListener listener);
 }
