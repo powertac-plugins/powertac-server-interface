@@ -107,11 +107,6 @@ public interface TariffMarket {
   public boolean setDefaultTariff (TariffSpecification newTariff);
   
   /**
-   * Returns the list of unprocessed transactions due to tariff publications.
-   */
-  public List<TariffTransaction> getTransactions ();
-  
-  /**
    * Registers a listener for publication of new Tariffs.
    */
   public void registerNewTariffListener (NewTariffListener listener);
