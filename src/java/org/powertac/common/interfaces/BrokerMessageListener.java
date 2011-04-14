@@ -20,6 +20,7 @@ package org.powertac.common.interfaces;
  * by calling registerBrokerMarketListener(this) on BrokerProxy.
  * @author David Dauer
  */
-public interface BrokerMarketListener
+public interface BrokerMessageListener
 {
+  void receiveMessage (Object msg);
 }
