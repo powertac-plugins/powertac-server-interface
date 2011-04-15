@@ -46,4 +46,14 @@ public interface BrokerProxy {
    * Sends a list of messages to all brokers
    */
   void broadcastMessages(List<?> messageObjects);
+  
+  /**
+   * Sets up a dispatch listener for market messages
+   */
+  void registerBrokerMarketListener (BrokerMessageListener listener);
+
+  /**
+   * Sets up a dispatch listener for tariff messages
+   */
+  void registerBrokerTariffListener (BrokerMessageListener listener);
 }
