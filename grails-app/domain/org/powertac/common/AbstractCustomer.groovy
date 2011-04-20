@@ -38,7 +38,7 @@ class AbstractCustomer
   List<Tariff> publishedTariffs = []
   
   /** Number of distinct entities (households) represented by this model */
-  Integer population = 1
+  Integer population = 100
 
   /** >0: max power consumption (think consumer with fuse limit); <0: min power production (think nuclear power plant with min output) */
   BigDecimal upperPowerCap = 100.0
@@ -58,6 +58,9 @@ class AbstractCustomer
   /** measures how sun intensity changes translate into load /generation changes of the customer */
   BigDecimal sunToPowerConversion = 0.0
 
+  /** HashMap that shows the population count of consumers that belong to a certain subscription of this AbstractCustomer */
+  HashMap subscriptionPopulation = new HashMap()
+  
   //TODO: Possibly add parameters as the ones below that provide descriptive statistical information on historic power consumption / production of the customer
   /*
    BigDecimal annualPowerAvg // >0: customer is on average a consumer; <0 customer is on average a producer
@@ -76,9 +79,7 @@ class AbstractCustomer
     upperPowerCap (nullable: false, scale: Constants.DECIMALS)
     lowerPowerCap (nullable: false, scale: Constants.DECIMALS)
     subscriptions (nullable:true)
-    //powerType(nullable: true)
-    //multiContracting (nullable: false)
-    //canNegotiate (nullable: false)
+
   }
 
   static mapping = { id (generator: 'assigned') }
@@ -97,32 +98,75 @@ class AbstractCustomer
 
     def listener = [publishNewTariffs:{tariffList -> publishedTariffs = tariffList }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
+    
+    this.schedule()
+    
     this.save()
   }
 
+  void schedule(){
+    
+    def add, add2
+    
+    def action = { this.step() }
+    add = {timeService.addAction(timeService.currentTime.plus(60*60*1000), {action(); add()})}
+    add()
+    
+        /*
+         def action2 = { this.evaluateNewPublishedTariffs() }
+         add2 = { timeService.addAction(timeService.currentTime.plus(3*60*60*1000), { action2(); add() }) }
+         add2()
+         */
+    
+    
+    println("Scheduled")
+  }
+    
+  
   /** Function utilized at the beginning in order to subscribe to the default tariff */
   void subscribeDefault() {
+    
     customerInfo.powerTypes.each { type ->
       this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariffMarketService.getDefaultTariff(type), this, population))
+    
+      subscriptionPopulation.put(TariffSubscription.findByTariff(tariffMarketService.getDefaultTariff(type)).id.toString(), population)
+      
     }
     this.save()
   }
 
   /** Subscribing certain subscription */
-  void subscribe(Tariff tariff, int customercount){
+  void subscribe(Tariff tariff, int customerCount){
 
-    this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariff, this, customercount))
-    tariff.save()
+    this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariff, this, customerCount))
+
+    TariffSubscription sub = TariffSubscription.findByTariffAndCustomer(tariff, this)
+    
+    println(customerCount)
+    if (subscriptionPopulation.containsKey(sub.id)){
+       int result = subscriptionPopulation.get(sub.id) + customerCount
+       subscriptionPopulation.put(sub.id, result)
+    }
+    else subscriptionPopulation.put(sub.id, customerCount)
+    
     this.save()
   }
 
   /** Unsubscribing certain subscription */
   void unsubscribe(Tariff tariff, int customerCount)
   {
-    TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
-    ts.unsubscribe(customerCount)
-    this.removeFromSubscriptions(ts)
-    tariff.save()
+     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
+  
+    ts.unsubscribe(customerCount) 
+    
+    if (subscriptionPopulation.containsKey(ts.id)){
+       int result = subscriptionPopulation.get(ts.id) - customerCount
+       subscriptionPopulation.put(ts.id, result)
+    }
+    if (subscriptionPopulation.get(ts.id) == 0) {
+      subscriptionPopulation.remove(ts.id)
+      this.removeFromSubscriptions(ts)
+    }
     ts.save()
     this.save()
   }
@@ -130,8 +174,11 @@ class AbstractCustomer
   /** Subscribing certain subscription */
   void subscribe(TariffSubscription ts)
   {
-    ts.subscribe(ts.customersCommitted)
+  
     this.addToSubscriptions(ts)
+    
+    subscriptionPopulation.put(ts.id, ts.customersCommitted)
+    
     ts.save()
     this.save()
   }
@@ -139,8 +186,11 @@ class AbstractCustomer
   /** Unsubscribing certain subscription */
   void unsubscribe(TariffSubscription ts)
   {
-    ts.unsubscribe(ts.customersCommitted)
+
     this.removeFromSubscriptions(ts)
+    
+    subscriptionPopulation.remove(ts.id)
+    
     ts.save()
     this.save()
   }
@@ -150,26 +200,57 @@ class AbstractCustomer
   void consumePower()
   {
     subscriptions.each {
-      double ran = 6.15 + Math.random()
-      println(ran);
-      it.usePower(ran)
+      int pop = subscriptionPopulation.get(it.id)
+
+      for (int i=0;i < pop;i++) {
+
+        double ran = 6.15 + Math.random()
+        println(i + " " + ran);
+        it.usePower(ran)
+      }
     }
   }
 
   /** The first implementation of the power consumption function.
    *  I utilized the mean consumption of a neighborhood of households with a random variable */
   void producePower(){
+
+    subscriptions.each {
+
+      int pop = subscriptionPopulation.get(it.id)
+
+      for (int i=0;i < pop;i++) {
+
+        double ran = 10 + Math.random()
+        println(i + " " + ran);
+        // it.usePower(ran)
+      }
+    }
   }
+
 
   /** The first implementation of the changing subscription function.
    * There are going to be many cases in the more detailed and complex models. */
   void changeSubscription(Tariff tariff, boolean flag) {
 
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
-
-    this.unsubscribe(tariff, ts.customersCommitted)
+    int populationCount = ts.customersCommitted
+    
+    this.unsubscribe(tariff, populationCount)
     this.SelectTariff(flag).each { newTariff ->
-      this.addToSubscriptions(tariffMarketService.subscribeToTariff(newTariff, this, 1))
+      this.addToSubscriptions(tariffMarketService.subscribeToTariff(newTariff, this, populationCount))
+    
+      TariffSubscription sub = TariffSubscription.findByTariffAndCustomer(tariff, this)
+      
+      if (subscriptionPopulation.containsKey(sub.id)) {
+        subscriptionPopulation.put(sub.id, subscriptionPopulation.get(sub.id) + population)
+      }
+      else {
+        subscriptionPopulation.put(sub.id, population)
+      }
+  
+      println(subscriptionPopulation.toString())
+  
     }
     this.save()
   }
@@ -213,14 +294,29 @@ class AbstractCustomer
 
     println("Revoked Size: " + revoked.size())
 
-    revoked.each {
-      TariffSubscription ts = it.handleRevokedTariff()
-      this.unsubscribe(it)
+    revoked.each { revokedSubscription ->
 
-      println(ts.toString())
+      TariffSubscription ts = revokedSubscription.handleRevokedTariff()
+      println("CustomersCommitted: " + ts.customersCommitted)
+      this.unsubscribe(revokedSubscription)
       this.subscribe(ts)
+      
       ts.save()
       this.save()
     }
   }
+  
+  void evaluateNewPublishedTariffs() {
+    
+    println(publishedTariffs.toString())
+      
+  }
+    
+  void step(){
+    
+    println(timeService.currentTime.toString()+ " " + id)
+    this.checkRevokedSubscriptions()
+    this.consumePower()
+  }
+    
 }
