@@ -202,12 +202,12 @@ class AbstractCustomer
     subscriptions.each {
       int pop = subscriptionPopulation.get(it.id)
 
-      for (int i=0;i < pop;i++) {
+      //for (int i=0;i < pop;i++) {
 
         double ran = 6.15 + Math.random()
-        println(i + " " + ran);
-        it.usePower(ran)
-      }
+        //println(i + " " + ran);
+        it.usePower(ran * pop)
+      //}
     }
   }
 
@@ -219,12 +219,12 @@ class AbstractCustomer
 
       int pop = subscriptionPopulation.get(it.id)
 
-      for (int i=0;i < pop;i++) {
+      //for (int i=0;i < pop;i++) {
 
         double ran = 10 + Math.random()
-        println(i + " " + ran);
-        // it.usePower(ran)
-      }
+        //println(i + " " + ran);
+        // it.usePower(ran * pop)
+      //}
     }
   }
 
