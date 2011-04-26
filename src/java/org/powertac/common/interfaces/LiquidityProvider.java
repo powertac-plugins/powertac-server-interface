@@ -17,7 +17,7 @@
 package org.powertac.common.interfaces;
 
 import org.powertac.common.Competition;
-import org.powertac.common.Product;
+import org.powertac.common.enumerations.ProductType;
 import org.powertac.common.Timeslot;
 import org.powertac.common.MarketTransaction;
 
@@ -59,6 +59,6 @@ public interface LiquidityProvider {
    * @param timeslot the timeslot to generate a quote for
    * @return List of {@link org.powertac.common.msg.ShoutDoCreateCmd}, {@link org.powertac.common.msg.ShoutDoUpdateCmd}, and {@link org.powertac.common.msg.ShoutDoDeleteCmd} objects to be processed by the auctioneer later on
    */
-  public List createQuoteFor(Product product, Timeslot timeslot);
+  public List createQuoteFor(ProductType product, Timeslot timeslot);
 
 }
