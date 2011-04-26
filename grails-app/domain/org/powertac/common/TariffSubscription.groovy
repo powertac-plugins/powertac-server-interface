@@ -59,7 +59,7 @@ class TariffSubscription {
   
   static auditable = true
   
-  static belongsTo = [tariff: Tariff]
+  static belongsTo = [tariff: Tariff, customer: AbstractCustomer]
 
   static constraints = {
     id(nullable: false, blank: false, unique: true)
@@ -202,6 +202,9 @@ class TariffSubscription {
       accountingService.addTariffTransaction(TariffTransactionType.PERIODIC,
           tariff, customer.customerInfo, customersCommitted, 0.0,
           customersCommitted * tariff.getPeriodicPayment())
+    }
+    if (!this.validate()) {
+      this.errors.allErrors.each { log.error(it.toString()) }
     }
     this.save()
   }
