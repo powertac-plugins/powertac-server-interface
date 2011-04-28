@@ -15,15 +15,15 @@
  */
 package org.powertac.common
 
-import java.util.List;
+import java.util.List
+
 import org.powertac.common.interfaces.NewTariffListener
 
 /**
  * Abstract customer implementation
  * @author Antonios Chrysopoulos
  */
-class AbstractCustomer 
-{
+class AbstractCustomer {
 
   def timeService
   def tariffMarketService
@@ -36,7 +36,7 @@ class AbstractCustomer
 
   /** The list of the published tariffs, pusblished and refreshed within a certain period */
   List<Tariff> publishedTariffs = []
-  
+
   /** Number of distinct entities (households) represented by this model */
   Integer population = 100
 
@@ -58,9 +58,6 @@ class AbstractCustomer
   /** measures how sun intensity changes translate into load /generation changes of the customer */
   BigDecimal sunToPowerConversion = 0.0
 
-  /** HashMap that shows the population count of consumers that belong to a certain subscription of this AbstractCustomer */
-  HashMap subscriptionPopulation = new HashMap()
-  
   //TODO: Possibly add parameters as the ones below that provide descriptive statistical information on historic power consumption / production of the customer
   /*
    BigDecimal annualPowerAvg // >0: customer is on average a consumer; <0 customer is on average a producer
@@ -79,7 +76,6 @@ class AbstractCustomer
     upperPowerCap (nullable: false, scale: Constants.DECIMALS)
     lowerPowerCap (nullable: false, scale: Constants.DECIMALS)
     subscriptions (nullable:true)
-
   }
 
   static mapping = { id (generator: 'assigned') }
@@ -98,39 +94,35 @@ class AbstractCustomer
 
     def listener = [publishNewTariffs:{tariffList -> publishedTariffs = tariffList }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
-    
+
     this.schedule()
-    
+
     this.save()
   }
 
   void schedule(){
-    
+
     def add, add2
-    
+
     def action = { this.step() }
     add = {timeService.addAction(timeService.currentTime.plus(60*60*1000), {action(); add()})}
     add()
-    
-        /*
-         def action2 = { this.evaluateNewPublishedTariffs() }
-         add2 = { timeService.addAction(timeService.currentTime.plus(3*60*60*1000), { action2(); add() }) }
-         add2()
-         */
-    
-    
-    println("Scheduled")
+
+    /*
+     def action2 = { this.evaluateNewPublishedTariffs() }
+     add2 = { timeService.addAction(timeService.currentTime.plus(3*60*60*1000), { action2(); add() }) }
+     add2()
+     */
+
+    log.info "Scheduled"
   }
-    
-  
+
+
   /** Function utilized at the beginning in order to subscribe to the default tariff */
   void subscribeDefault() {
-    
+
     customerInfo.powerTypes.each { type ->
       this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariffMarketService.getDefaultTariff(type), this, population))
-    
-      subscriptionPopulation.put(TariffSubscription.findByTariff(tariffMarketService.getDefaultTariff(type)).id.toString(), population)
-      
     }
     this.save()
   }
@@ -140,74 +132,49 @@ class AbstractCustomer
 
     this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariff, this, customerCount))
 
-    TariffSubscription sub = TariffSubscription.findByTariffAndCustomer(tariff, this)
-    
-    println(customerCount)
-    if (subscriptionPopulation.containsKey(sub.id)){
-       int result = subscriptionPopulation.get(sub.id) + customerCount
-       subscriptionPopulation.put(sub.id, result)
-    }
-    else subscriptionPopulation.put(sub.id, customerCount)
-    
     this.save()
   }
 
   /** Unsubscribing certain subscription */
-  void unsubscribe(Tariff tariff, int customerCount)
-  {
-     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
-  
-    ts.unsubscribe(customerCount) 
-    
-    if (subscriptionPopulation.containsKey(ts.id)){
-       int result = subscriptionPopulation.get(ts.id) - customerCount
-       subscriptionPopulation.put(ts.id, result)
-    }
-    if (subscriptionPopulation.get(ts.id) == 0) {
-      subscriptionPopulation.remove(ts.id)
-      this.removeFromSubscriptions(ts)
-    }
+  void unsubscribe(Tariff tariff, int customerCount) {
+    TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
+
+    ts.unsubscribe(customerCount)
+
     ts.save()
     this.save()
   }
 
   /** Subscribing certain subscription */
-  void subscribe(TariffSubscription ts)
-  {
-  
+  void subscribe(TariffSubscription ts) {
+
     this.addToSubscriptions(ts)
-    
-    subscriptionPopulation.put(ts.id, ts.customersCommitted)
-    
+
     ts.save()
     this.save()
   }
 
   /** Unsubscribing certain subscription */
-  void unsubscribe(TariffSubscription ts)
-  {
+  void unsubscribe(TariffSubscription ts) {
 
     this.removeFromSubscriptions(ts)
-    
-    subscriptionPopulation.remove(ts.id)
-    
+
     ts.save()
     this.save()
   }
 
   /** The first implementation of the power consumption function.
    *  I utilized the mean consumption of a neighborhood of households with a random variable */
-  void consumePower()
-  {
-    subscriptions.each {
-      int pop = subscriptionPopulation.get(it.id)
+  void consumePower() {
+    subscriptions.each { sub ->
 
-      //for (int i=0;i < pop;i++) {
+      def summary = 0
 
+      for (int i=0;i < sub.customersCommitted;i++) {
         double ran = 6.15 + Math.random()
-        //println(i + " " + ran);
-        it.usePower(ran * pop)
-      //}
+        summary = summary + ran
+      }
+      sub.usePower(summary)
     }
   }
 
@@ -215,16 +182,15 @@ class AbstractCustomer
    *  I utilized the mean consumption of a neighborhood of households with a random variable */
   void producePower(){
 
-    subscriptions.each {
+    subscriptions.each { sub ->
 
-      int pop = subscriptionPopulation.get(it.id)
+      def summary = 0
 
-      //for (int i=0;i < pop;i++) {
-
-        double ran = 10 + Math.random()
-        //println(i + " " + ran);
-        // it.usePower(ran * pop)
-      //}
+      for (int i=0;i < sub.customersCommitted;i++) {
+        double ran = 6.15 + Math.random()
+        summary = summary + ran
+      }
+      //it.usePower(summary)
     }
   }
 
@@ -235,50 +201,36 @@ class AbstractCustomer
 
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
     int populationCount = ts.customersCommitted
-    
+
     this.unsubscribe(tariff, populationCount)
     this.SelectTariff(flag).each { newTariff ->
       this.addToSubscriptions(tariffMarketService.subscribeToTariff(newTariff, this, populationCount))
-    
-      TariffSubscription sub = TariffSubscription.findByTariffAndCustomer(tariff, this)
-      
-      if (subscriptionPopulation.containsKey(sub.id)) {
-        subscriptionPopulation.put(sub.id, subscriptionPopulation.get(sub.id) + population)
-      }
-      else {
-        subscriptionPopulation.put(sub.id, population)
-      }
-  
-      println(subscriptionPopulation.toString())
-  
     }
     this.save()
   }
 
   /** The first implementation of the tariff selection function.
    * This is a random chooser of the available tariffs, totally insensitive*/
-  List<Tariff> SelectTariff(boolean flag)
-  {
+  List<Tariff> SelectTariff(boolean flag) {
     List<Tariff> available
     List<Tariff> result = []
     int ran, index
     customerInfo.powerTypes.each { powerType ->
       if (flag) {
         available = tariffMarketService.getActiveTariffList(powerType)
-        println(available.toString())
+        log.info "Available Tariffs : ${available.toString()} "
         index = available.indexOf(tariffMarketService.getDefaultTariff(powerType))
-        println("Index of Default Tariff:" + index)
+        log.info "Index of Default Tariff: ${index} "
       }
       else {
         available = publishedTariffs
         index = available.indexOf(this.subscriptions?.tariff)
-        println("Index of Current Tariff:" + index)
+        log.info "Index of Current Tariff: ${index} "
       }
       ran = index
 
       while ( ran == index) {
         ran = available.size() * Math.random()
-        println(ran);
       }
       result << available.get(ran)
     }
@@ -290,33 +242,28 @@ class AbstractCustomer
   void checkRevokedSubscriptions(){
 
     List<TariffSubscription> revoked = tariffMarketService.getRevokedSubscriptionList(this)
-    println(revoked.toString())
-
-    println("Revoked Size: " + revoked.size())
+    log.info "Revoked Tariffs : ${revoked.toString()} "
 
     revoked.each { revokedSubscription ->
 
       TariffSubscription ts = revokedSubscription.handleRevokedTariff()
-      println("CustomersCommitted: " + ts.customersCommitted)
       this.unsubscribe(revokedSubscription)
       this.subscribe(ts)
-      
+
       ts.save()
       this.save()
     }
   }
-  
+
   void evaluateNewPublishedTariffs() {
-    
+
     println(publishedTariffs.toString())
-      
   }
-    
+
   void step(){
-    
+
     println(timeService.currentTime.toString()+ " " + id)
     this.checkRevokedSubscriptions()
     this.consumePower()
   }
-    
 }
