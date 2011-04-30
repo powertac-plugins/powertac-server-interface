@@ -95,11 +95,11 @@ class AbstractCustomer {
     def listener = [publishNewTariffs:{tariffList -> publishedTariffs = tariffList }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
 
-    this.schedule()
+    //this.schedule()
 
     this.save()
   }
-
+/*
   void schedule(){
 
     def add, add2
@@ -112,11 +112,11 @@ class AbstractCustomer {
      def action2 = { this.evaluateNewPublishedTariffs() }
      add2 = { timeService.addAction(timeService.currentTime.plus(3*60*60*1000), { action2(); add() }) }
      add2()
-     */
+     
 
     log.info "Scheduled"
   }
-
+/*
 
   /** Function utilized at the beginning in order to subscribe to the default tariff */
   void subscribeDefault() {
@@ -174,6 +174,7 @@ class AbstractCustomer {
         double ran = 6.15 + Math.random()
         summary = summary + ran
       }
+      log.info "Power Consumption: ${summary}"
       sub.usePower(summary)
     }
   }
