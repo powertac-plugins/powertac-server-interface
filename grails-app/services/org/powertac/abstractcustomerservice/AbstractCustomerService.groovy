@@ -51,8 +51,10 @@ class AbstractCustomerService implements TimeslotPhaseProcessor {
   }
 
 
-  void init() {
+  void init(PluginConfig config) {
 
+    configuration = config
+    
     for (int i = 1; i < getNumberOfCustomers()+1;i++){
       def abstractCustomerInfo = new CustomerInfo(Name: "Customer " + i,customerType: CustomerType.CustomerHousehold, powerTypes: [PowerType.CONSUMPTION])
       assert(abstractCustomerInfo.save())

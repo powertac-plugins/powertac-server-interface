@@ -51,13 +51,12 @@ implements InitializationService {
     }
     */
 
-   PluginConfig abstractCustomer = PluginConfig.findByRoleName('AbstractCustomer')
-   if (abstractCustomer == null) {
+   PluginConfig abstractCustomerConfig = PluginConfig.findByRoleName('AbstractCustomer')
+   if (abstractCustomerConfig == null) {
      log.error "PluginConfig for AbstractCustomerService does not exist"
    }
    else {
-     abstractCustomerService.configuration = abstractCustomer
-     abstractCustomerService.init()
+     abstractCustomerService.init(abstractCustomerConfig)
      return 'AbstractCustomer'
    }
    return 'fail'
