@@ -35,10 +35,10 @@ class AbstractCustomer {
   CustomerInfo customerInfo
 
   /** The list of the published tariffs, pusblished and refreshed within a certain period */
-  List<Tariff> publishedTariffs = []
+  //List<Tariff> publishedTariffs = []
 
   /** Number of distinct entities (households) represented by this model */
-  Integer population = 100
+  //Integer population = 100
 
   /** >0: max power consumption (think consumer with fuse limit); <0: min power production (think nuclear power plant with min output) */
   BigDecimal upperPowerCap = 100.0
@@ -72,13 +72,15 @@ class AbstractCustomer {
 
     id(nullable: false, blank: false)
     customerInfo(nullable: false)
-    publishedTariffs(nullable:true)
+    //publishedTariffs(nullable:true)
     upperPowerCap (nullable: false, scale: Constants.DECIMALS)
     lowerPowerCap (nullable: false, scale: Constants.DECIMALS)
-    subscriptions (nullable:true)
+    //subscriptions (nullable:true)
   }
 
   static mapping = { id (generator: 'assigned') }
+  
+  static transients = ['population']
 
   static auditable = true
 
@@ -92,31 +94,18 @@ class AbstractCustomer {
 
     this.id = customerInfo.getId()
 
-    def listener = [publishNewTariffs:{tariffList -> publishedTariffs = tariffList }] as NewTariffListener
+    def listener = [publishNewTariffs:{tariffList -> evaluateNewPublishedTariffs(tariffList) }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
 
     //this.schedule()
 
     this.save()
   }
-/*
-  void schedule(){
-
-    def add, add2
-
-    def action = { this.step() }
-    add = {timeService.addAction(timeService.currentTime.plus(60*60*1000), {action(); add()})}
-    add()
-
-    /*
-     def action2 = { this.evaluateNewPublishedTariffs() }
-     add2 = { timeService.addAction(timeService.currentTime.plus(3*60*60*1000), { action2(); add() }) }
-     add2()
-     
-
-    log.info "Scheduled"
+  
+  int getPopulation ()
+  {
+    return customerInfo.population
   }
-/*
 
   /** Function utilized at the beginning in order to subscribe to the default tariff */
   void subscribeDefault() {
@@ -204,7 +193,7 @@ class AbstractCustomer {
     int populationCount = ts.customersCommitted
 
     this.unsubscribe(tariff, populationCount)
-    this.SelectTariff(flag).each { newTariff ->
+    this.selectTariff(flag).each { newTariff ->
       this.addToSubscriptions(tariffMarketService.subscribeToTariff(newTariff, this, populationCount))
     }
     this.save()
@@ -212,7 +201,7 @@ class AbstractCustomer {
 
   /** The first implementation of the tariff selection function.
    * This is a random chooser of the available tariffs, totally insensitive*/
-  List<Tariff> SelectTariff(boolean flag) {
+  List<Tariff> selectTariff(boolean flag) {
     List<Tariff> available
     List<Tariff> result = []
     int ran, index
@@ -256,9 +245,9 @@ class AbstractCustomer {
     }
   }
 
-  void evaluateNewPublishedTariffs() {
+  void evaluateNewPublishedTariffs(List<Tariff> newTariffs) {
 
-    println(publishedTariffs.toString())
+    println(newTariffs.toString())
   }
 
   void step(){

@@ -24,41 +24,38 @@ import org.powertac.common.enumerations.PowerType
 import org.powertac.common.interfaces.TimeslotPhaseProcessor
 
 
-class AbstractCustomerService implements TimeslotPhaseProcessor {
-
+class AbstractCustomerService implements TimeslotPhaseProcessor 
+{
   static transactional = true
 
   def timeService // autowire
   def competitionControlService
 
-  PluginConfig configuration
+  // JEC - this attribute is a property of a CustomerInfo. Why is it here?
+  int population = 1
 
-  void afterPropertiesSet ()
+  void init(PluginConfig config) 
   {
-    competitionControlService.registerTimeslotPhase(this, 1)
-    competitionControlService.registerTimeslotPhase(this, 2)
-  }
+    competitionControlService?.registerTimeslotPhase(this, 1)
+    competitionControlService?.registerTimeslotPhase(this, 2)
 
-  // ----------------- Configuration access ------------------
-  BigDecimal getPopulation()
-  {
-    return configuration.configuration['population'].toBigDecimal()
-  }
-  
-  BigDecimal getNumberOfCustomers()
-  {
-    return configuration.configuration['numberOfCustomers'].toBigDecimal()
-  }
-
-
-  void init(PluginConfig config) {
-
-    configuration = config
+    Integer value = config.configuration['population']?.toInteger()
+    if (value == null) {
+      log.error "Missing value for population. Default is ${population}"
+    } 
+    population = value
     
-    for (int i = 1; i < getNumberOfCustomers()+1;i++){
-      def abstractCustomerInfo = new CustomerInfo(Name: "Customer " + i,customerType: CustomerType.CustomerHousehold, powerTypes: [PowerType.CONSUMPTION])
+    Integer numberOfCustomers = config.configuration['numberOfCustomers']?.toInteger()
+    if (value == null) {
+      log.error "Missing value for numberOfCustomers. Default is 1"
+      numberOfCustomers = 1
+    }
+    for (int i = 1; i < numberOfCustomers + 1; i++){
+      def abstractCustomerInfo =
+          new CustomerInfo(Name: "Customer " + i,customerType: CustomerType.CustomerHousehold,
+                           population: population, powerTypes: [PowerType.CONSUMPTION])
       assert(abstractCustomerInfo.save())
-      def abstractCustomer = new AbstractCustomer(CustomerInfo: abstractCustomerInfo)
+      def abstractCustomer = new AbstractCustomer(customerInfo: abstractCustomerInfo)
       abstractCustomer.init()
       abstractCustomer.subscribeDefault()
       assert(abstractCustomer.save())
