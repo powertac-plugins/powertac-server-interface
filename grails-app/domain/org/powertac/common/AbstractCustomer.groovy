@@ -72,10 +72,9 @@ class AbstractCustomer {
 
     id(nullable: false, blank: false)
     customerInfo(nullable: false)
-    //publishedTariffs(nullable:true)
     upperPowerCap (nullable: false, scale: Constants.DECIMALS)
     lowerPowerCap (nullable: false, scale: Constants.DECIMALS)
-    //subscriptions (nullable:true)
+
   }
 
   static mapping = { id (generator: 'assigned') }
@@ -97,8 +96,6 @@ class AbstractCustomer {
     def listener = [publishNewTariffs:{tariffList -> evaluateNewPublishedTariffs(tariffList) }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
 
-    //this.schedule()
-
     this.save()
   }
   
@@ -111,7 +108,13 @@ class AbstractCustomer {
   void subscribeDefault() {
 
     customerInfo.powerTypes.each { type ->
-      this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariffMarketService.getDefaultTariff(type), this, population))
+      
+      if (tariffMarketService.getDefaultTariff(type) == null){
+        log.info "No default Subscription for type ${type.toString()} for ${this.toString()} to subscribe to."
+      }
+      else {
+        this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariffMarketService.getDefaultTariff(type), this, population))
+      }
     }
     this.save()
   }
