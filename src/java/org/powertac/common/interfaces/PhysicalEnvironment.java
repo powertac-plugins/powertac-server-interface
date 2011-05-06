@@ -17,7 +17,6 @@
 package org.powertac.common.interfaces;
 
 import org.powertac.common.Timeslot;
-import org.powertac.common.Weather;
 
 import java.util.List;
 
