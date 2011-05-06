@@ -17,7 +17,7 @@
 package org.powertac.common.interfaces;
 
 import org.powertac.common.Timeslot;
-import org.powertac.common.Weather;
+import org.powertac.common.WeatherReport;
 
 import java.util.List;
 
@@ -38,5 +38,5 @@ public interface PhysicalEnvironment {
    * @param targetTimeslots timeslots to generate weather forecasts for
    * @return a list of weather forecast objects
    */
-  List<Weather> generateWeatherData(Timeslot currentTimeslot, List<Timeslot> targetTimeslots);
+  List<WeatherReport> generateWeatherData(Timeslot currentTimeslot, List<Timeslot> targetTimeslots);
 }
