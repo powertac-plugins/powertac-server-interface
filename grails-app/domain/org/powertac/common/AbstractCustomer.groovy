@@ -18,6 +18,7 @@ package org.powertac.common
 import java.util.List
 
 import org.powertac.common.interfaces.NewTariffListener
+import org.powertac.common.enumerations.PowerType
 
 /**
  * Abstract customer implementation
@@ -78,13 +79,13 @@ class AbstractCustomer {
   }
 
   static mapping = { id (generator: 'assigned') }
-  
+
   static transients = ['population']
 
-  static auditable = true
+                       static auditable = true
 
-  public String toString() {
-    return id + customerInfo.getName()
+                       public String toString() {
+    return customerInfo.getName()
   }
 
   /** The initialization actions. We can add more
@@ -98,7 +99,7 @@ class AbstractCustomer {
 
     this.save()
   }
-  
+
   int getPopulation ()
   {
     return customerInfo.population
@@ -108,12 +109,13 @@ class AbstractCustomer {
   void subscribeDefault() {
 
     customerInfo.powerTypes.each { type ->
-      
+
       if (tariffMarketService.getDefaultTariff(type) == null){
         log.info "No default Subscription for type ${type.toString()} for ${this.toString()} to subscribe to."
       }
       else {
         this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariffMarketService.getDefaultTariff(type), this, population))
+        log.info "${this.toString()} was subscribed to the default broker successfully."
       }
     }
     this.save()
@@ -123,7 +125,7 @@ class AbstractCustomer {
   void subscribe(Tariff tariff, int customerCount){
 
     this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariff, this, customerCount))
-
+    log.info "${this.toString()} was subscribed to the Tariff ${tariff.toString()} successfully."
     this.save()
   }
 
@@ -132,7 +134,7 @@ class AbstractCustomer {
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
 
     ts.unsubscribe(customerCount)
-
+    log.info "${this.toString()} was unsubscribed from the Tariff ${tariff.toString()} successfully."
     ts.save()
     this.save()
   }
@@ -141,7 +143,7 @@ class AbstractCustomer {
   void subscribe(TariffSubscription ts) {
 
     this.addToSubscriptions(ts)
-
+    log.info "${this.toString()} was subscribed to the subscription ${ts.toString()} successfully."
     ts.save()
     this.save()
   }
@@ -150,7 +152,7 @@ class AbstractCustomer {
   void unsubscribe(TariffSubscription ts) {
 
     this.removeFromSubscriptions(ts)
-
+    log.info "${this.toString()} was unsubscribed from the subscription ${ts.toString()} successfully."
     ts.save()
     this.save()
   }
@@ -161,13 +163,13 @@ class AbstractCustomer {
     subscriptions.each { sub ->
 
       def summary = 0
-
+      log.info "${sub.tariff.rateMap.toString()}"
       for (int i=0;i < sub.customersCommitted;i++) {
         double ran = 6.15 + Math.random()
         summary = summary + ran
       }
-      log.info "Power Consumption: ${summary}"
-      sub.usePower(summary)
+      log.info " Consumption Load: ${ran} / ${subscriptions.size()} "
+      sub.usePower(ran/subscriptions.size())
     }
   }
 
@@ -177,13 +179,13 @@ class AbstractCustomer {
 
     subscriptions.each { sub ->
 
-      def summary = 0
-
-      for (int i=0;i < sub.customersCommitted;i++) {
-        double ran = 6.15 + Math.random()
-        summary = summary + ran
-      }
-      //it.usePower(summary)
+    def summary = 0
+    
+    for (int i=0;i < sub.customersCommitted;i++) {
+      double ran = 6.15 + Math.random()
+      summary = summary + ran
+    }
+    //it.usePower(summary)
     }
   }
 
@@ -194,11 +196,12 @@ class AbstractCustomer {
 
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
     int populationCount = ts.customersCommitted
-
     this.unsubscribe(tariff, populationCount)
+    
     this.selectTariff(flag).each { newTariff ->
       this.addToSubscriptions(tariffMarketService.subscribeToTariff(newTariff, this, populationCount))
     }
+    
     this.save()
   }
 
@@ -220,6 +223,7 @@ class AbstractCustomer {
         index = available.indexOf(this.subscriptions?.tariff)
         log.info "Index of Current Tariff: ${index} "
       }
+      
       ran = index
 
       while ( ran == index) {
@@ -255,7 +259,6 @@ class AbstractCustomer {
 
   void step(){
 
-    println(timeService.currentTime.toString()+ " " + id)
     this.checkRevokedSubscriptions()
     this.consumePower()
   }
