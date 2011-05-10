@@ -163,13 +163,13 @@ class AbstractCustomer {
     subscriptions.each { sub ->
 
       def summary = 0
-      log.info "${sub.tariff.rateMap.toString()}"
+      //log.info "${sub.tariff.rateMap.toString()}"
       for (int i=0;i < sub.customersCommitted;i++) {
         double ran = 6.15 + Math.random()
         summary = summary + ran
       }
-      log.info " Consumption Load: ${ran} / ${subscriptions.size()} "
-      sub.usePower(ran/subscriptions.size())
+      log.info " Consumption Load: ${summary} / ${subscriptions.size()} "
+      sub.usePower(summary/subscriptions.size())
     }
   }
 
