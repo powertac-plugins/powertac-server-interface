@@ -179,13 +179,13 @@ class AbstractCustomer {
 
     subscriptions.each { sub ->
 
-      def summary = 0
-      
-      for (int i=0;i < sub.customersCommitted;i++) {
-        double ran = 6.15 + Math.random()
-        summary = summary + ran
-       }
-      //it.usePower(summary)
+    def summary = 0
+    
+    for (int i=0;i < sub.customersCommitted;i++) {
+      double ran = 6.15 + Math.random()
+      summary = summary + ran
+    }
+    //it.usePower(summary)
     }
   }
 

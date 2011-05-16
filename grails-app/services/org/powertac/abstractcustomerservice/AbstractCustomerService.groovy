@@ -37,7 +37,7 @@ class AbstractCustomerService implements TimeslotPhaseProcessor
   void init(PluginConfig config) 
   {
     competitionControlService?.registerTimeslotPhase(this, 1)
-    competitionControlService?.registerTimeslotPhase(this, 2)
+    //competitionControlService?.registerTimeslotPhase(this, 2)
 
     Integer value = config.configuration['population']?.toInteger()
     if (value == null) {
@@ -48,7 +48,7 @@ class AbstractCustomerService implements TimeslotPhaseProcessor
     Integer numberOfCustomers = config.configuration['numberOfCustomers']?.toInteger()
     if (value == null) {
       log.error "Missing value for numberOfCustomers. Default is 1"
-      numberOfCustomers = 1
+      numberOfCustomers = 0
     }
     for (int i = 1; i < numberOfCustomers + 1; i++){
       def abstractCustomerInfo =
@@ -62,16 +62,19 @@ class AbstractCustomerService implements TimeslotPhaseProcessor
     }
   }
 
-  void activate(Instant now, int phase) {
-
+  void activate(Instant now, int phase) 
+  {
     log.info "Activate"
     def abstractCustomerList = AbstractCustomer.list()
-
-    if (phase == 1){
-      abstractCustomerList*.step()
-    }  
-    else {
-      abstractCustomerList*.toString()
+    if (abstractCustomerList.size() > 0) {
+      if (phase == 1) {
+	log.info "Phase 1"
+	abstractCustomerList*.step()
+      }  
+      else {
+	log.info "Phase 2"
+	abstractCustomerList*.toString()
+      }
     }
   }
 }
