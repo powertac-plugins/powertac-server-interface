@@ -17,6 +17,7 @@ package org.powertac.common
 
 import java.util.List
 
+import org.joda.time.Instant
 import org.powertac.common.interfaces.NewTariffListener
 import org.powertac.common.enumerations.PowerType
 
@@ -28,7 +29,7 @@ class AbstractCustomer {
 
   def timeService
   def tariffMarketService
-
+  
   /** The id of the Abstract Customer */
   String id
 
@@ -82,9 +83,9 @@ class AbstractCustomer {
 
   static transients = ['population']
 
-                       static auditable = true
+  static auditable = true
 
-                       public String toString() {
+  public String toString() {
     return customerInfo.getName()
   }
 
@@ -254,9 +255,78 @@ class AbstractCustomer {
 
   void evaluateNewPublishedTariffs(List<Tariff> newTariffs) {
 
-    println(newTariffs.toString())
+    def minEstimation = Float.POSITIVE_INFINITY
+    def index = 0, minIndex = 0
+    
+    newTariffs.each { tariff ->
+      println(tariff.toString())
+      
+      if (tariff.isExpired() == false){
+        
+        minEstimation = Math.min(minEstimation,this.costEstimation(tariff))
+        minIndex = index
+        
+      }
+      
+      index++    
+    }
+     
+    println("Tariff: " + newTariffs.getAt(minIndex).toString() + " Estimation = " + minEstimation)
+    
+    subscriptions.each { sub ->
+    
+      int populationCount = sub.customersCommitted
+      this.unsubscribe(sub)
+    
+      this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+    }
+     
+    this.save()
+    
+    
   }
 
+  float costEstimation(Tariff tariff) {
+    
+    float costVariable = estimateVariableTariffPayment(tariff)
+    float costFixed = estimateFixedTariffPayments(tariff)
+    return costVariable + costFixed
+    
+  }
+  
+  
+  float estimateFixedTariffPayments(Tariff tariff){
+    
+    return (tariff.getPeriodicPayment() + ((tariff.getEarlyWithdrawPayment() + tariff.getSignupPayment())/tariff.getMinDuration()))
+    
+  }
+  
+  float estimateVariableTariffPayment(Tariff tariff){
+      
+      int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
+      Instant base = timeService.currentTime - serial*TimeService.HOUR
+      println("Time Base: " + base.toString())
+      int day = (int) (serial / 24) + 1 // this will be changed to one or more random numbers 
+      Instant now = base + day * TimeService.DAY
+      
+      BigDecimal costSummary = 0
+      def summary = 0, cumulativeSummary = 0
+      
+      for (int i=0;i < 24;i++){
+                
+        for (int j=0;j < population;j++) {
+          double ran = 6.15 + Math.random()
+          summary = summary + ran
+        }
+        cumulativeSummary += summary
+        costSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
+        now = now + TimeService.HOUR
+      }
+      
+      return costSummary
+      
+  }
+  
   void step(){
 
     this.checkRevokedSubscriptions()
