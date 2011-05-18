@@ -297,7 +297,7 @@ class AbstractCustomer {
   
   float estimateFixedTariffPayments(Tariff tariff){
     
-    return (tariff.getPeriodicPayment() + ((tariff.getEarlyWithdrawPayment() + tariff.getSignupPayment())/tariff.getMinDuration()))
+    return ((float)tariff.getPeriodicPayment() + (float)((tariff.getEarlyWithdrawPayment() + tariff.getSignupPayment())/((float)tariff.getMinDuration())))
     
   }
   
