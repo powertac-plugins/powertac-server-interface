@@ -255,7 +255,7 @@ class AbstractCustomer {
 
   void evaluateNewPublishedTariffs(List<Tariff> newTariffs) {
 
-    def minEstimation = Float.POSITIVE_INFINITY
+    def minEstimation = Double.POSITIVE_INFINITY
     def index = 0, minIndex = 0
     
     newTariffs.each { tariff ->
@@ -286,23 +286,21 @@ class AbstractCustomer {
     
   }
 
-  float costEstimation(Tariff tariff) {
+  double costEstimation(Tariff tariff) {
     
-    float costVariable = estimateVariableTariffPayment(tariff)
-    float costFixed = estimateFixedTariffPayments(tariff)
+    double costVariable = estimateVariableTariffPayment(tariff)
+    double costFixed = estimateFixedTariffPayments(tariff)
     return costVariable + costFixed
     
   }
-  
-  
-  float estimateFixedTariffPayments(Tariff tariff)
+
+  double estimateFixedTariffPayments(Tariff tariff)
   {
-    double lifecyclePayment =tariff.getEarlyWithdrawPayment() + tariff.getSignupPayment() 
+    double lifecyclePayment = tariff.getEarlyWithdrawPayment() + tariff.getSignupPayment() 
     return (tariff.getPeriodicPayment() + (lifecyclePayment / tariff.getMinDuration()))
-    
   }
   
-  float estimateVariableTariffPayment(Tariff tariff){
+  double estimateVariableTariffPayment(Tariff tariff){
       
       int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
       Instant base = timeService.currentTime - serial*TimeService.HOUR
