@@ -15,6 +15,8 @@
  */
 package org.powertac.common
 
+import java.util.List
+
 import org.joda.time.Instant
 import org.powertac.common.interfaces.NewTariffListener
 
