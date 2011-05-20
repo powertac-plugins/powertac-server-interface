@@ -20,12 +20,14 @@ import java.util.List
 import org.joda.time.Instant
 import org.powertac.common.interfaces.NewTariffListener
 import org.powertac.common.enumerations.PowerType
+import org.apache.commons.logging.LogFactory
 
 /**
  * Abstract customer implementation
  * @author Antonios Chrysopoulos
  */
 class AbstractCustomer {
+  private static final log = LogFactory.getLog(this)
 
   def timeService
   def tariffMarketService
@@ -259,7 +261,7 @@ class AbstractCustomer {
     def index = 0, minIndex = 0
     
     newTariffs.each { tariff ->
-      println(tariff.toString())
+      log.debug(tariff.toString())
       
       if (tariff.isExpired() == false){
         
@@ -271,7 +273,7 @@ class AbstractCustomer {
       index++    
     }
      
-    println("Tariff: " + newTariffs.getAt(minIndex).toString() + " Estimation = " + minEstimation)
+    log.debug("Tariff: " + newTariffs.getAt(minIndex).toString() + " Estimation = " + minEstimation)
     
     subscriptions.each { sub ->
     
@@ -304,7 +306,7 @@ class AbstractCustomer {
       
       int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
       Instant base = timeService.currentTime - serial*TimeService.HOUR
-      println("Time Base: " + base.toString())
+      log.debug("Time Base: " + base.toString())
       int day = (int) (serial / 24) + 1 // this will be changed to one or more random numbers 
       Instant now = base + day * TimeService.DAY
       
