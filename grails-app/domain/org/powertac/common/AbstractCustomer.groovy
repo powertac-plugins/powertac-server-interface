@@ -19,16 +19,19 @@ import java.util.List
 
 import org.joda.time.Instant
 import org.powertac.common.interfaces.NewTariffListener
+import org.powertac.common.enumerations.PowerType
+import org.apache.commons.logging.LogFactory
 
 /**
  * Abstract customer implementation
  * @author Antonios Chrysopoulos
  */
 class AbstractCustomer {
+  private static final log = LogFactory.getLog(this)
 
   def timeService
   def tariffMarketService
-
+  
   /** The id of the Abstract Customer */
   String id
 
@@ -48,7 +51,6 @@ class AbstractCustomer {
   BigDecimal lowerPowerCap = 0.0
 
   /** >=0 - gram CO2 per kW/h */
-
   BigDecimal carbonEmissionRate = 0.0
 
   /** measures how wind changes translate into load / generation changes of the customer */
