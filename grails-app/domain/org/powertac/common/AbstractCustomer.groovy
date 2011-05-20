@@ -103,7 +103,7 @@ class AbstractCustomer {
 
     this.id = customerInfo.getId()
 
-    def listener = [publishNewTariffs:{tariffList -> simpleEvaluationNewTariffs(tariffList) }] as NewTariffListener
+    def listener = [publishNewTariffs:{tariffList -> possibilityEvaluationNewTariffs(tariffList) }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
 
     this.save()
@@ -351,6 +351,33 @@ class AbstractCustomer {
 
   }
 
+  void possibilityEvaluationNewTariffs(List<Tariff> newTariffs) {
+
+    Vector estimation = new Vector()
+
+    newTariffs.each { tariff ->
+      log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
+
+      if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
+        estimation.add(-(costEstimation(tariff)))
+      }
+
+    }
+
+    int minIndex = logitPossibilityEstimation(estimation)
+
+    subscriptions.each { sub ->
+
+      int populationCount = sub.customersCommitted
+      this.unsubscribe(sub.tariff, populationCount)
+
+      this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+    }
+
+    this.save()
+
+  }
+
   double costEstimation(Tariff tariff) {
 
     double costVariable = estimateVariableTariffPayment(tariff)
@@ -397,6 +424,33 @@ class AbstractCustomer {
     }
     log.info "Variable cost Summary: ${costSummary}"
     return costSummary
+
+  }
+
+  int logitPossibilityEstimation(Vector estimation) {
+
+    double lamda = 5 // 0 the random - 10 the logic
+    double summedEstimations = 0
+    Vector randomizer = new Vector()
+    int[] possibilities = new int[estimation.size()]
+
+    for (int i=0;i < estimation.size();i++){
+      summedEstimations += Math.pow(2.7,lamda*estimation.get(i))
+      log.info"Summary of Estimation: ${summedEstimations}"
+    }
+
+    for (int i = 0;i < estimation.size();i++){
+      possibilities[i] = (int)(100 *(Math.pow(2.7,lamda*estimation.get(i)) / summedEstimations))
+      for (int j=0;j < possibilities[i]; j++){
+        randomizer.add(i)
+      }
+    }
+
+    //log.info "Randomizer Vector: ${randomizer}"
+    log.info "Possibility Vector: ${possibilities.toString()}"
+    int index = randomizer.get((int)(randomizer.size()*Math.random()))
+    log.info "Resulting Index = ${index}"
+    return index
 
   }
 
