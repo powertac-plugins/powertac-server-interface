@@ -17,10 +17,9 @@ package org.powertac.common
 
 import java.util.List
 
+import org.apache.commons.logging.LogFactory
 import org.joda.time.Instant
 import org.powertac.common.interfaces.NewTariffListener
-import org.powertac.common.enumerations.PowerType
-import org.apache.commons.logging.LogFactory
 
 /**
  * Abstract customer implementation
@@ -31,7 +30,7 @@ class AbstractCustomer {
 
   def timeService
   def tariffMarketService
-  
+
   /** The id of the Abstract Customer */
   String id
 
@@ -170,11 +169,12 @@ class AbstractCustomer {
   /** The first implementation of the power consumption function.
    *  I utilized the mean consumption of a neighborhood of households with a random variable */
   void consumePower() {
-    //Timeslot ts =  Timeslot.currentTimeslot()
+    Timeslot ts =  Timeslot.currentTimeslot()
+    double summary = 0
     subscriptions.each { sub ->
 
-      // if (ts == null) summary = getConsumptionByTimeslot(sub)
-      double summary = getConsumptionByTimeslot(sub)
+      if (ts == null) summary = getConsumptionByTimeslot(sub)
+      else summary = getConsumptionByTimeslot(ts.serialNumber)
 
       log.info " Consumption Load: ${summary} / ${subscriptions.size()} "
       sub.usePower(summary/subscriptions.size())
@@ -182,7 +182,7 @@ class AbstractCustomer {
   }
 
 
-  double getConsumptionByTimeslot(int serial, Tariff tariff) {
+  double getConsumptionByTimeslot(int serial) {
 
     int hour = (int) (serial % Constants.HOURS_OF_DAY)
     double ran = 0,summary = 0
@@ -214,7 +214,6 @@ class AbstractCustomer {
 
     int hour = timeService.getHourOfDay()
     double ran = 0, summary = 0
-
 
     log.info "Hour: ${hour} "
 
@@ -312,7 +311,7 @@ class AbstractCustomer {
     revoked.each { revokedSubscription ->
 
       TariffSubscription ts = revokedSubscription.handleRevokedTariff()
-      this.unsubscribe(revokedSubscription)
+      this.unsubscribe(revokedSubscription,)
       this.subscribe(ts)
 
       ts.save()
@@ -343,7 +342,7 @@ class AbstractCustomer {
     subscriptions.each { sub ->
 
       int populationCount = sub.customersCommitted
-      this.unsubscribe(sub)
+      this.unsubscribe(sub.tariff, populationCount)
 
       this.subscribe(newTariffs.getAt(minIndex),  populationCount)
     }
@@ -387,7 +386,7 @@ class AbstractCustomer {
 
     for (int i=0;i < 24;i++){
 
-      summary = getConsumptionByTimeslot(i,tariff)
+      summary = getConsumptionByTimeslot(i)
 
       cumulativeSummary += summary
       costSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
