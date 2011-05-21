@@ -136,11 +136,10 @@ class AbstractCustomer {
   }
 
   /** Unsubscribing certain subscription */
-  void unsubscribe(Tariff tariff, int customerCount) {
-    TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
-    ts.unsubscribe(customerCount)
-    log.info "${this.toString()} was unsubscribed from the Tariff ${tariff.toString()} successfully."
-    ts.save()
+  void unsubscribe(TariffSubscription subscription, int customerCount) {
+    subscription.unsubscribe(customerCount)
+    log.info "${this.toString()} was unsubscribed from ${subscription.toString()} successfully."
+    subscription.save()
     this.save()
   }
 
@@ -257,11 +256,11 @@ class AbstractCustomer {
 
   /** The first implementation of the changing subscription function.
    * There are going to be many cases in the more detailed and complex models. */
-  void changeSubscription(Tariff tariff, boolean flag) {
-
+  void changeSubscription(Tariff tariff, boolean flag)
+  {
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
     int populationCount = ts.customersCommitted
-    this.unsubscribe(tariff, populationCount)
+    this.unsubscribe(ts, populationCount)
 
     this.selectTariff(flag).each { newTariff ->
       this.addToSubscriptions(tariffMarketService.subscribeToTariff(newTariff, this, populationCount))
@@ -340,7 +339,7 @@ class AbstractCustomer {
     subscriptions.each { sub ->
 
       int populationCount = sub.customersCommitted
-      this.unsubscribe(sub.tariff, populationCount)
+      this.unsubscribe(sub, populationCount)
 
       this.subscribe(newTariffs.getAt(minIndex),  populationCount)
     }
@@ -351,6 +350,13 @@ class AbstractCustomer {
 
   void possibilityEvaluationNewTariffs(List<Tariff> newTariffs)
   {
+    // if there are no current subscriptions, then this is the
+    // initial publication of default tariffs
+    if (subscriptions == null || subscriptions.size() == 0) {
+      subscribeDefault()
+      return
+    }
+    
     Vector estimation = new Vector()
 
     newTariffs.each { tariff ->
@@ -363,8 +369,9 @@ class AbstractCustomer {
     int minIndex = logitPossibilityEstimation(estimation)
 
     subscriptions.each { sub ->
+      log.info "Existing subscription ${sub.toString()}"
       int populationCount = sub.customersCommitted
-      this.unsubscribe(sub.tariff, populationCount)
+      this.unsubscribe(sub, populationCount)
 
       this.subscribe(newTariffs.getAt(minIndex),  populationCount)
     }
@@ -384,7 +391,7 @@ class AbstractCustomer {
     double minDuration
 
     // When there is not a Minimum Duration of the contract, you cannot divide with the duration because you don't know it.
-    if (tariff.getMinDuration() == 0) minDuration = 1
+    if (tariff.getMinDuration() == 0) minDuration = 5
     else minDuration = tariff.getMinDuration()
 
     log.info("Minimum Duration: ${minDuration}")
@@ -421,7 +428,7 @@ class AbstractCustomer {
 
   int logitPossibilityEstimation(Vector estimation) {
 
-    double lamda = 5 // 0 the random - 10 the logic
+    double lamda = 0.3 // 0 the random - 10 the logic
     double summedEstimations = 0
     Vector randomizer = new Vector()
     int[] possibilities = new int[estimation.size()]

@@ -38,7 +38,7 @@ implements InitializationService {
  {
    PluginConfig abstractCustomer =
        new PluginConfig(roleName:'AbstractCustomer',
-       configuration: [population: '100', numberOfCustomers: '2'])
+       configuration: [population: '100', numberOfCustomers: '0'])
    abstractCustomer.save()
  }
 
