@@ -349,38 +349,33 @@ class AbstractCustomer {
 
   }
 
-  void possibilityEvaluationNewTariffs(List<Tariff> newTariffs) {
-
+  void possibilityEvaluationNewTariffs(List<Tariff> newTariffs)
+  {
     Vector estimation = new Vector()
 
     newTariffs.each { tariff ->
       log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
 
-      if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
+      if (!tariff.isExpired() && customerInfo.powerTypes.find{tariff.powerType == it}) {
         estimation.add(-(costEstimation(tariff)))
       }
-
     }
-
     int minIndex = logitPossibilityEstimation(estimation)
 
     subscriptions.each { sub ->
-
       int populationCount = sub.customersCommitted
       this.unsubscribe(sub.tariff, populationCount)
 
       this.subscribe(newTariffs.getAt(minIndex),  populationCount)
     }
-
     this.save()
   }
 
-  double costEstimation(Tariff tariff) {
-
+  double costEstimation(Tariff tariff)
+  {
     double costVariable = estimateVariableTariffPayment(tariff)
     double costFixed = estimateFixedTariffPayments(tariff)
     return costVariable + costFixed
-
   }
 
   double estimateFixedTariffPayments(Tariff tariff)
