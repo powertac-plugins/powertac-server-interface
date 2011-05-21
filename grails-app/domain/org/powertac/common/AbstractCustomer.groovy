@@ -19,7 +19,6 @@ import java.util.List
 
 import org.joda.time.Instant
 import org.powertac.common.interfaces.NewTariffListener
-import org.powertac.common.enumerations.PowerType
 
 /**
  * Abstract customer implementation
@@ -29,7 +28,7 @@ class AbstractCustomer {
 
   def timeService
   def tariffMarketService
-  
+
   /** The id of the Abstract Customer */
   String id
 
@@ -49,6 +48,7 @@ class AbstractCustomer {
   BigDecimal lowerPowerCap = 0.0
 
   /** >=0 - gram CO2 per kW/h */
+
   BigDecimal carbonEmissionRate = 0.0
 
   /** measures how wind changes translate into load / generation changes of the customer */
@@ -89,22 +89,27 @@ class AbstractCustomer {
     return customerInfo.getName()
   }
 
+  int getPopulation ()
+  {
+    return customerInfo.population
+  }
+
+
+  //============================= INITIALIZATION=================================================
   /** The initialization actions. We can add more
    * Subscribe to the default tariff for the beginning of the game */
   void init(){
 
     this.id = customerInfo.getId()
 
-    def listener = [publishNewTariffs:{tariffList -> evaluateNewPublishedTariffs(tariffList) }] as NewTariffListener
+    def listener = [publishNewTariffs:{tariffList -> simpleEvaluationNewTariffs(tariffList) }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
 
     this.save()
   }
 
-  int getPopulation ()
-  {
-    return customerInfo.population
-  }
+
+  //============================= SUBSCRIPTION =================================================
 
   /** Function utilized at the beginning in order to subscribe to the default tariff */
   void subscribeDefault() {
@@ -125,15 +130,12 @@ class AbstractCustomer {
   /** Subscribing certain subscription */
   void subscribe(Tariff tariff, int customerCount){
 
-    this.addToSubscriptions(tariffMarketService.subscribeToTariff(tariff, this, customerCount))
-    log.info "${this.toString()} was subscribed to the Tariff ${tariff.toString()} successfully."
-    this.save()
+    this.addSubscription(tariffMarketService.subscribeToTariff(tariff, this, customerCount))
   }
 
   /** Unsubscribing certain subscription */
   void unsubscribe(Tariff tariff, int customerCount) {
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
-
     ts.unsubscribe(customerCount)
     log.info "${this.toString()} was unsubscribed from the Tariff ${tariff.toString()} successfully."
     ts.save()
@@ -141,36 +143,95 @@ class AbstractCustomer {
   }
 
   /** Subscribing certain subscription */
-  void subscribe(TariffSubscription ts) {
+  void addSubscription(TariffSubscription ts) {
 
     this.addToSubscriptions(ts)
     log.info "${this.toString()} was subscribed to the subscription ${ts.toString()} successfully."
-    ts.save()
+    //ts.save()
     this.save()
   }
 
   /** Unsubscribing certain subscription */
-  void unsubscribe(TariffSubscription ts) {
+  void removeSubscription(TariffSubscription ts) {
 
     this.removeFromSubscriptions(ts)
     log.info "${this.toString()} was unsubscribed from the subscription ${ts.toString()} successfully."
-    ts.save()
+    ts.delete()
     this.save()
   }
+
+  //============================= CONSUMPTION - PRODUCTION =================================================
 
   /** The first implementation of the power consumption function.
    *  I utilized the mean consumption of a neighborhood of households with a random variable */
   void consumePower() {
+    //Timeslot ts =  Timeslot.currentTimeslot()
     subscriptions.each { sub ->
 
-      def summary = 0
-      //log.info "${sub.tariff.rateMap.toString()}"
-      for (int i=0;i < sub.customersCommitted;i++) {
-        double ran = 6.15 + Math.random()
-        summary = summary + ran
-      }
+      // if (ts == null) summary = getConsumptionByTimeslot(sub)
+      double summary = getConsumptionByTimeslot(sub)
+
       log.info " Consumption Load: ${summary} / ${subscriptions.size()} "
       sub.usePower(summary/subscriptions.size())
+    }
+  }
+
+
+  double getConsumptionByTimeslot(int serial, Tariff tariff) {
+
+    int hour = (int) (serial % Constants.HOURS_OF_DAY)
+    double ran = 0,summary = 0
+
+    log.info " Hour: ${hour} "
+    for (int i = 0; i < population;i++){
+
+      if (hour < 7)
+      {
+        ran = Math.random()
+        summary = summary + ran
+      }
+      else if (hour < 18){
+
+        ran = 3 + Math.random()
+        summary = summary + ran
+
+      }
+      else {
+        ran = 2 + Math.random()
+        summary = summary + ran
+      }
+      log.info "Summary: ${summary}"
+      return summary
+    }
+  }
+
+  double getConsumptionByTimeslot(TariffSubscription sub) {
+
+    int hour = timeService.getHourOfDay()
+    double ran = 0, summary = 0
+
+
+    log.info "Hour: ${hour} "
+
+    for (int i = 0; i < sub.customersCommitted;i++){
+
+      if (hour < 7)
+      {
+        ran = Math.random()
+        summary = summary + ran
+      }
+      else if (hour < 18){
+
+        ran = 3 + Math.random()
+        summary = summary + ran
+
+      }
+      else {
+        ran = 2 + Math.random()
+        summary = summary + ran
+      }
+      log.info "Summary: ${summary}"
+      return summary
     }
   }
 
@@ -180,16 +241,17 @@ class AbstractCustomer {
 
     subscriptions.each { sub ->
 
-    def summary = 0
-    
-    for (int i=0;i < sub.customersCommitted;i++) {
-      double ran = 6.15 + Math.random()
-      summary = summary + ran
-    }
-    //it.usePower(summary)
+      def summary = 0
+
+      for (int i=0;i < sub.customersCommitted;i++) {
+        double ran = 6.15 + Math.random()
+        summary = summary + ran
+      }
+      //it.usePower(summary)
     }
   }
 
+  //============================= TARIFF SELECTION PROCESS =================================================
 
   /** The first implementation of the changing subscription function.
    * There are going to be many cases in the more detailed and complex models. */
@@ -198,11 +260,11 @@ class AbstractCustomer {
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
     int populationCount = ts.customersCommitted
     this.unsubscribe(tariff, populationCount)
-    
+
     this.selectTariff(flag).each { newTariff ->
       this.addToSubscriptions(tariffMarketService.subscribeToTariff(newTariff, this, populationCount))
     }
-    
+
     this.save()
   }
 
@@ -224,7 +286,7 @@ class AbstractCustomer {
         index = available.indexOf(this.subscriptions?.tariff)
         log.info "Index of Current Tariff: ${index} "
       }
-      
+
       ran = index
 
       while ( ran == index) {
@@ -245,87 +307,95 @@ class AbstractCustomer {
     revoked.each { revokedSubscription ->
 
       TariffSubscription ts = revokedSubscription.handleRevokedTariff()
-      this.unsubscribe(revokedSubscription)
-      this.subscribe(ts)
+      this.removeSubscription(revokedSubscription)
+      this.addSubscription(ts)
 
-      ts.save()
+      //ts.save()
       this.save()
     }
   }
 
-  void evaluateNewPublishedTariffs(List<Tariff> newTariffs) {
+  void simpleEvaluationNewTariffs(List<Tariff> newTariffs) {
 
-    def minEstimation = Double.POSITIVE_INFINITY
-    def index = 0, minIndex = 0
-    
+    double minEstimation = Double.POSITIVE_INFINITY
+    int index = 0, minIndex = 0
+
     newTariffs.each { tariff ->
-      println(tariff.toString())
-      
-      if (tariff.isExpired() == false){
-        
-        minEstimation = Math.min(minEstimation,this.costEstimation(tariff))
+      log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
+
+      if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
+
+        minEstimation = (double)Math.min(minEstimation,this.costEstimation(tariff))
         minIndex = index
-        
+
       }
-      
-      index++    
+
+      index++
     }
-     
-    println("Tariff: " + newTariffs.getAt(minIndex).toString() + " Estimation = " + minEstimation)
-    
+
+    log.info "Tariff:  ${newTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
+
     subscriptions.each { sub ->
-    
+
       int populationCount = sub.customersCommitted
-      this.unsubscribe(sub)
-    
+      this.removeSubscription(sub)
+
       this.subscribe(newTariffs.getAt(minIndex),  populationCount)
     }
-     
+
     this.save()
-    
-    
+
   }
 
   double costEstimation(Tariff tariff) {
-    
+
     double costVariable = estimateVariableTariffPayment(tariff)
     double costFixed = estimateFixedTariffPayments(tariff)
     return costVariable + costFixed
-    
+
   }
 
   double estimateFixedTariffPayments(Tariff tariff)
   {
-    double lifecyclePayment = tariff.getEarlyWithdrawPayment() + tariff.getSignupPayment() 
-    return (tariff.getPeriodicPayment() + (lifecyclePayment / tariff.getMinDuration()))
+    double lifecyclePayment = (double)tariff.getEarlyWithdrawPayment() + (double)tariff.getSignupPayment()
+    double minDuration
+
+    // When there is not a Minimum Duration of the contract, you cannot divide with the duration because you don't know it.
+    if (tariff.getMinDuration() == 0) minDuration = 1
+    else minDuration = tariff.getMinDuration()
+
+    log.info("Minimum Duration: ${minDuration}")
+
+    return ((double)tariff.getPeriodicPayment() + (lifecyclePayment / minDuration))
   }
-  
+
   double estimateVariableTariffPayment(Tariff tariff){
-      
-      int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
-      Instant base = timeService.currentTime - serial*TimeService.HOUR
-      println("Time Base: " + base.toString())
-      int day = (int) (serial / 24) + 1 // this will be changed to one or more random numbers 
-      Instant now = base + day * TimeService.DAY
-      
-      BigDecimal costSummary = 0
-      def summary = 0, cumulativeSummary = 0
-      
-      for (int i=0;i < 24;i++){
-                
-        for (int j=0;j < population;j++) {
-          double ran = 6.15 + Math.random()
-          summary = summary + ran
-        }
-        cumulativeSummary += summary
-        costSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
-        now = now + TimeService.HOUR
-      }
-      
-      return costSummary
-      
+
+    int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
+    Instant base = timeService.currentTime - serial*TimeService.HOUR
+
+    int day = (int) (serial / 24) + 1 // this will be changed to one or more random numbers
+    Instant now = base + day * TimeService.DAY
+
+    double costSummary = 0
+    double summary = 0, cumulativeSummary = 0
+
+    for (int i=0;i < 24;i++){
+
+      summary = getConsumptionByTimeslot(i,tariff)
+
+      cumulativeSummary += summary
+      costSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
+
+      log.info "Time:  ${now.toString()} costSummary: ${costSummary} "
+
+      now = now + TimeService.HOUR
+    }
+    log.info "Variable cost Summary: ${costSummary}"
+    return costSummary
+
   }
-  
+
   void step(){
 
     this.checkRevokedSubscriptions()
