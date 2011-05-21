@@ -18,6 +18,7 @@ package org.powertac.common
 //import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.joda.time.Instant
 import org.powertac.common.enumerations.TariffTransactionType
+import org.apache.commons.logging.LogFactory
 
 /**
  * A TariffSubscription is an entity representing an association between a Customer
@@ -29,6 +30,8 @@ import org.powertac.common.enumerations.TariffTransactionType
  * @author Carsten Block, John Collins
  */
 class TariffSubscription {
+  private static final log = LogFactory.getLog(this)
+
 
   def timeService // autowire time service
   def accountingService // autowire accounting service
@@ -107,7 +110,7 @@ class TariffSubscription {
     }
     // post the signup bonus
     if (tariff.signupPayment != 0.0) {
-      println "signup bonus: ${customerCount} customers, total = ${customerCount * tariff.getSignupPayment()}"
+      log.debug "signup bonus: ${customerCount} customers, total = ${customerCount * tariff.getSignupPayment()}"
       accountingService.addTariffTransaction(TariffTransactionType.SIGNUP,
           tariff, customer.customerInfo, customerCount, 0.0,
           customerCount * tariff.getSignupPayment())

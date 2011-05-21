@@ -17,6 +17,7 @@ package org.powertac.common
 
 import java.util.List
 
+import org.apache.commons.logging.LogFactory
 import org.joda.time.Instant
 import org.powertac.common.interfaces.NewTariffListener
 
@@ -25,6 +26,7 @@ import org.powertac.common.interfaces.NewTariffListener
  * @author Antonios Chrysopoulos
  */
 class AbstractCustomer {
+  private static final log = LogFactory.getLog(this)
 
   def timeService
   def tariffMarketService
@@ -48,7 +50,6 @@ class AbstractCustomer {
   BigDecimal lowerPowerCap = 0.0
 
   /** >=0 - gram CO2 per kW/h */
-
   BigDecimal carbonEmissionRate = 0.0
 
   /** measures how wind changes translate into load / generation changes of the customer */
@@ -102,7 +103,7 @@ class AbstractCustomer {
 
     this.id = customerInfo.getId()
 
-    def listener = [publishNewTariffs:{tariffList -> simpleEvaluationNewTariffs(tariffList) }] as NewTariffListener
+    def listener = [publishNewTariffs:{tariffList -> possibilityEvaluationNewTariffs(tariffList) }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
 
     this.save()
@@ -168,11 +169,12 @@ class AbstractCustomer {
   /** The first implementation of the power consumption function.
    *  I utilized the mean consumption of a neighborhood of households with a random variable */
   void consumePower() {
-    //Timeslot ts =  Timeslot.currentTimeslot()
+    Timeslot ts =  Timeslot.currentTimeslot()
+    double summary = 0
     subscriptions.each { sub ->
 
-      // if (ts == null) summary = getConsumptionByTimeslot(sub)
-      double summary = getConsumptionByTimeslot(sub)
+      if (ts == null) summary = getConsumptionByTimeslot(sub)
+      else summary = getConsumptionByTimeslot(ts.serialNumber)
 
       log.info " Consumption Load: ${summary} / ${subscriptions.size()} "
       sub.usePower(summary/subscriptions.size())
@@ -180,7 +182,7 @@ class AbstractCustomer {
   }
 
 
-  double getConsumptionByTimeslot(int serial, Tariff tariff) {
+  double getConsumptionByTimeslot(int serial) {
 
     int hour = (int) (serial % Constants.HOURS_OF_DAY)
     double ran = 0,summary = 0
@@ -212,7 +214,6 @@ class AbstractCustomer {
 
     int hour = timeService.getHourOfDay()
     double ran = 0, summary = 0
-
 
     log.info "Hour: ${hour} "
 
@@ -310,7 +311,7 @@ class AbstractCustomer {
     revoked.each { revokedSubscription ->
 
       TariffSubscription ts = revokedSubscription.handleRevokedTariff()
-      this.unsubscribe(revokedSubscription)
+      this.unsubscribe(revokedSubscription,)
       this.subscribe(ts)
 
       ts.save()
@@ -341,7 +342,34 @@ class AbstractCustomer {
     subscriptions.each { sub ->
 
       int populationCount = sub.customersCommitted
-      this.unsubscribe(sub)
+      this.unsubscribe(sub.tariff, populationCount)
+
+      this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+    }
+
+    this.save()
+
+  }
+
+  void possibilityEvaluationNewTariffs(List<Tariff> newTariffs) {
+
+    Vector estimation = new Vector()
+
+    newTariffs.each { tariff ->
+      log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
+
+      if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
+        estimation.add(-(costEstimation(tariff)))
+      }
+
+    }
+
+    int minIndex = logitPossibilityEstimation(estimation)
+
+    subscriptions.each { sub ->
+
+      int populationCount = sub.customersCommitted
+      this.unsubscribe(sub.tariff, populationCount)
 
       this.subscribe(newTariffs.getAt(minIndex),  populationCount)
     }
@@ -364,7 +392,7 @@ class AbstractCustomer {
     double minDuration
 
     // When there is not a Minimum Duration of the contract, you cannot divide with the duration because you don't know it.
-    if (tariff.getMinDuration() == 0) minDuration = 1
+    if (tariff.getMinDuration() == 0) minDuration = (5 * TimeService.DAY)
     else minDuration = tariff.getMinDuration()
 
     log.info("Minimum Duration: ${minDuration}")
@@ -385,7 +413,7 @@ class AbstractCustomer {
 
     for (int i=0;i < 24;i++){
 
-      summary = getConsumptionByTimeslot(i,tariff)
+      summary = getConsumptionByTimeslot(i)
 
       cumulativeSummary += summary
       costSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
@@ -396,6 +424,33 @@ class AbstractCustomer {
     }
     log.info "Variable cost Summary: ${costSummary}"
     return costSummary
+
+  }
+
+  int logitPossibilityEstimation(Vector estimation) {
+
+    double lamda = 0.3 // 0 the random - 10 the logic
+    double summedEstimations = 0
+    Vector randomizer = new Vector()
+    int[] possibilities = new int[estimation.size()]
+
+    for (int i=0;i < estimation.size();i++){
+      summedEstimations += Math.pow(2.7,lamda*estimation.get(i))
+      log.info"Summary of Estimation: ${summedEstimations}"
+    }
+
+    for (int i = 0;i < estimation.size();i++){
+      possibilities[i] = (int)(100 *(Math.pow(2.7,lamda*estimation.get(i)) / summedEstimations))
+      for (int j=0;j < possibilities[i]; j++){
+        randomizer.add(i)
+      }
+    }
+
+    //log.info "Randomizer Vector: ${randomizer}"
+    log.info "Possibility Vector: ${possibilities.toString()}"
+    int index = randomizer.get((int)(randomizer.size()*Math.random()))
+    log.info "Resulting Index = ${index}"
+    return index
 
   }
 
