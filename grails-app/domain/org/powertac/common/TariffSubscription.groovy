@@ -176,7 +176,6 @@ class TariffSubscription {
         tariffMarketService.subscribeToTariff(newTariff, customer, customersCommitted)
     log.info "Tariff ${tariff.id} superseded by ${newTariff.id} for ${customersCommitted} customers"
     customersCommitted = 0
-    //assert this.delete()
     return result
   }
 

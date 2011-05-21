@@ -17,10 +17,9 @@ package org.powertac.common
 
 import java.util.List
 
+import org.apache.commons.logging.LogFactory
 import org.joda.time.Instant
 import org.powertac.common.interfaces.NewTariffListener
-import org.powertac.common.enumerations.PowerType
-import org.apache.commons.logging.LogFactory
 
 /**
  * Abstract customer implementation
@@ -101,11 +100,11 @@ class AbstractCustomer {
   //============================= INITIALIZATION=================================================
   /** The initialization actions. We can add more
    * Subscribe to the default tariff for the beginning of the game */
-  void init(){
-
+  void init()
+  {
     this.id = customerInfo.getId()
 
-    def listener = [publishNewTariffs:{tariffList -> simpleEvaluationNewTariffs(tariffList) }] as NewTariffListener
+    def listener = [publishNewTariffs:{tariffList -> possibilityEvaluationNewTariffs(tariffList) }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
 
     this.save()
@@ -167,12 +166,14 @@ class AbstractCustomer {
 
   /** The first implementation of the power consumption function.
    *  I utilized the mean consumption of a neighborhood of households with a random variable */
-  void consumePower() {
-    //Timeslot ts =  Timeslot.currentTimeslot()
+  void consumePower() 
+  {
+    Timeslot ts =  Timeslot.currentTimeslot()
+    double summary = 0
     subscriptions.each { sub ->
 
-      // if (ts == null) summary = getConsumptionByTimeslot(sub)
-      double summary = getConsumptionByTimeslot(sub)
+      if (ts == null) summary = getConsumptionByTimeslot(sub)
+      else summary = getConsumptionByTimeslot(ts.serialNumber)
 
       log.info " Consumption Load: ${summary} / ${subscriptions.size()} "
       sub.usePower(summary/subscriptions.size())
@@ -180,7 +181,7 @@ class AbstractCustomer {
   }
 
 
-  double getConsumptionByTimeslot(int serial, Tariff tariff) {
+  double getConsumptionByTimeslot(int serial) {
 
     int hour = (int) (serial % Constants.HOURS_OF_DAY)
     double ran = 0,summary = 0
@@ -212,8 +213,6 @@ class AbstractCustomer {
 
     int hour = timeService.getHourOfDay()
     double ran = 0, summary = 0
-
-
     log.info "Hour: ${hour} "
 
     for (int i = 0; i < sub.customersCommitted;i++){
@@ -310,7 +309,7 @@ class AbstractCustomer {
     revoked.each { revokedSubscription ->
 
       TariffSubscription ts = revokedSubscription.handleRevokedTariff()
-      this.removeSubscription(revokedSubscription)
+      this.removeSubscription(revokedSubscription,)
       this.addSubscription(ts)
 
       //ts.save()
@@ -318,27 +317,61 @@ class AbstractCustomer {
     }
   }
 
-  void simpleEvaluationNewTariffs(List<Tariff> newTariffs) 
-  {
+  void simpleEvaluationNewTariffs(List<Tariff> newTariffs) {
+
     double minEstimation = Double.POSITIVE_INFINITY
     int index = 0, minIndex = 0
 
     newTariffs.each { tariff ->
-      log.debug(tariff.toString())
-      
-      if (tariff.isExpired() == false) {        
-        minEstimation = Math.min(minEstimation,
-                                 this.costEstimation(tariff))
+      log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
+
+      if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
+
+        minEstimation = (double)Math.min(minEstimation,this.costEstimation(tariff))
         minIndex = index
+
       }
+
       index++
     }
-    log.debug("Tariff: " + newTariffs.getAt(minIndex).toString() + " Estimation = " + minEstimation)
+
+    log.info "Tariff:  ${newTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
+
     subscriptions.each { sub ->
+
       int populationCount = sub.customersCommitted
-      this.removeSubscription(sub)
+      this.unsubscribe(sub.tariff, populationCount)
+
       this.subscribe(newTariffs.getAt(minIndex),  populationCount)
     }
+
+    this.save()
+
+  }
+
+  void possibilityEvaluationNewTariffs(List<Tariff> newTariffs) {
+
+    Vector estimation = new Vector()
+
+    newTariffs.each { tariff ->
+      log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
+
+      if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
+        estimation.add(-(costEstimation(tariff)))
+      }
+
+    }
+
+    int minIndex = logitPossibilityEstimation(estimation)
+
+    subscriptions.each { sub ->
+
+      int populationCount = sub.customersCommitted
+      this.unsubscribe(sub.tariff, populationCount)
+
+      this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+    }
+
     this.save()
   }
 
@@ -364,28 +397,58 @@ class AbstractCustomer {
     return ((double)tariff.getPeriodicPayment() + (lifecyclePayment / minDuration))
   }
 
-  double estimateVariableTariffPayment(Tariff tariff)
-  {
+  double estimateVariableTariffPayment(Tariff tariff){
+
     int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
     Instant base = timeService.currentTime - serial*TimeService.HOUR
-    log.debug("Time Base: " + base.toString())
+
     int day = (int) (serial / 24) + 1 // this will be changed to one or more random numbers
     Instant now = base + day * TimeService.DAY
 
-    BigDecimal costSummary = 0
-    def summary = 0, cumulativeSummary = 0
+    double costSummary = 0
+    double summary = 0, cumulativeSummary = 0
 
     for (int i=0;i < 24;i++){
 
-      for (int j=0;j < population;j++) {
-        double ran = 6.15 + Math.random()
-        summary = summary + ran
-      }
+      summary = getConsumptionByTimeslot(i)
+
       cumulativeSummary += summary
       costSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
+
+      log.info "Time:  ${now.toString()} costSummary: ${costSummary} "
+
       now = now + TimeService.HOUR
     }
+    log.info "Variable cost Summary: ${costSummary}"
     return costSummary
+
+  }
+
+  int logitPossibilityEstimation(Vector estimation) {
+
+    double lamda = 5 // 0 the random - 10 the logic
+    double summedEstimations = 0
+    Vector randomizer = new Vector()
+    int[] possibilities = new int[estimation.size()]
+
+    for (int i=0;i < estimation.size();i++){
+      summedEstimations += Math.pow(2.7,lamda*estimation.get(i))
+      log.info"Summary of Estimation: ${summedEstimations}"
+    }
+
+    for (int i = 0;i < estimation.size();i++){
+      possibilities[i] = (int)(100 *(Math.pow(2.7,lamda*estimation.get(i)) / summedEstimations))
+      for (int j=0;j < possibilities[i]; j++){
+        randomizer.add(i)
+      }
+    }
+
+    //log.info "Randomizer Vector: ${randomizer}"
+    log.info "Possibility Vector: ${possibilities.toString()}"
+    int index = randomizer.get((int)(randomizer.size()*Math.random()))
+    log.info "Resulting Index = ${index}"
+    return index
+
   }
 
   void step(){
