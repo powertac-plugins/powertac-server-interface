@@ -171,14 +171,12 @@ class TariffSubscription {
       // there is no superseding tariff, so we have to revert to the default tariff.
       newTariff = tariffMarketService.getDefaultTariff(tariff.tariffSpec.powerType)
     }
-	  
-		
-      TariffSubscription result =
-          tariffMarketService.subscribeToTariff(newTariff, customer, customersCommitted)
-      log.info "Tariff ${tariff.id} superseded by ${newTariff.id} for ${customersCommitted} customers"
-      customersCommitted = 0
-      assert this.save()
-      return result
+
+    TariffSubscription result =
+        tariffMarketService.subscribeToTariff(newTariff, customer, customersCommitted)
+    log.info "Tariff ${tariff.id} superseded by ${newTariff.id} for ${customersCommitted} customers"
+    customersCommitted = 0
+    return result
   }
 
   /**
