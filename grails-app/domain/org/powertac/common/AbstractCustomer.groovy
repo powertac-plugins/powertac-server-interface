@@ -430,6 +430,7 @@ class AbstractCustomer {
   int logitPossibilityEstimation(Vector estimation) {
 
     double lamda = 0.3 // 0 the random - 10 the logic
+
     double summedEstimations = 0
     Vector randomizer = new Vector()
     int[] possibilities = new int[estimation.size()]
