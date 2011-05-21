@@ -19,12 +19,15 @@ import java.util.List
 
 import org.joda.time.Instant
 import org.powertac.common.interfaces.NewTariffListener
+import org.powertac.common.enumerations.PowerType
+import org.apache.commons.logging.LogFactory
 
 /**
  * Abstract customer implementation
  * @author Antonios Chrysopoulos
  */
 class AbstractCustomer {
+  private static final log = LogFactory.getLog(this)
 
   def timeService
   def tariffMarketService
@@ -315,36 +318,28 @@ class AbstractCustomer {
     }
   }
 
-  void simpleEvaluationNewTariffs(List<Tariff> newTariffs) {
-
+  void simpleEvaluationNewTariffs(List<Tariff> newTariffs) 
+  {
     double minEstimation = Double.POSITIVE_INFINITY
     int index = 0, minIndex = 0
 
     newTariffs.each { tariff ->
-      log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
-
-      if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
-
-        minEstimation = (double)Math.min(minEstimation,this.costEstimation(tariff))
+      log.debug(tariff.toString())
+      
+      if (tariff.isExpired() == false) {        
+        minEstimation = Math.min(minEstimation,
+                                 this.costEstimation(tariff))
         minIndex = index
-
       }
-
       index++
     }
-
-    log.info "Tariff:  ${newTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
-
+    log.debug("Tariff: " + newTariffs.getAt(minIndex).toString() + " Estimation = " + minEstimation)
     subscriptions.each { sub ->
-
       int populationCount = sub.customersCommitted
       this.removeSubscription(sub)
-
       this.subscribe(newTariffs.getAt(minIndex),  populationCount)
     }
-
     this.save()
-
   }
 
   double costEstimation(Tariff tariff) {
@@ -369,31 +364,28 @@ class AbstractCustomer {
     return ((double)tariff.getPeriodicPayment() + (lifecyclePayment / minDuration))
   }
 
-  double estimateVariableTariffPayment(Tariff tariff){
-
+  double estimateVariableTariffPayment(Tariff tariff)
+  {
     int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
     Instant base = timeService.currentTime - serial*TimeService.HOUR
-
+    log.debug("Time Base: " + base.toString())
     int day = (int) (serial / 24) + 1 // this will be changed to one or more random numbers
     Instant now = base + day * TimeService.DAY
 
-    double costSummary = 0
-    double summary = 0, cumulativeSummary = 0
+    BigDecimal costSummary = 0
+    def summary = 0, cumulativeSummary = 0
 
     for (int i=0;i < 24;i++){
 
-      summary = getConsumptionByTimeslot(i,tariff)
-
+      for (int j=0;j < population;j++) {
+        double ran = 6.15 + Math.random()
+        summary = summary + ran
+      }
       cumulativeSummary += summary
       costSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
-
-      log.info "Time:  ${now.toString()} costSummary: ${costSummary} "
-
       now = now + TimeService.HOUR
     }
-    log.info "Variable cost Summary: ${costSummary}"
     return costSummary
-
   }
 
   void step(){
