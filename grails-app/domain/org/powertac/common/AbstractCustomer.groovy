@@ -37,12 +37,6 @@ class AbstractCustomer {
   /** The Customer specifications*/
   CustomerInfo customerInfo
 
-  /** The list of the published tariffs, pusblished and refreshed within a certain period */
-  //List<Tariff> publishedTariffs = []
-
-  /** Number of distinct entities (households) represented by this model */
-  //Integer population = 100
-
   /** >0: max power consumption (think consumer with fuse limit); <0: min power production (think nuclear power plant with min output) */
   BigDecimal upperPowerCap = 100.0
 
@@ -50,7 +44,6 @@ class AbstractCustomer {
   BigDecimal lowerPowerCap = 0.0
 
   /** >=0 - gram CO2 per kW/h */
-
   BigDecimal carbonEmissionRate = 0.0
 
   /** measures how wind changes translate into load / generation changes of the customer */
@@ -148,7 +141,6 @@ class AbstractCustomer {
   {
     this.addToSubscriptions(ts)
     log.info "${this.toString()} was subscribed to the subscription ${ts.toString()} successfully."
-    //ts.save()
     this.save()
   }
 
@@ -299,8 +291,6 @@ class AbstractCustomer {
       TariffSubscription ts = revokedSubscription.handleRevokedTariff()
       this.removeSubscription(revokedSubscription,)
       this.addSubscription(ts)
-
-      //ts.save()
       this.save()
     }
   }
@@ -311,33 +301,33 @@ class AbstractCustomer {
     // initial publication of default tariffs
     if (subscriptions == null || subscriptions.size() == 0) {
       subscribeDefault()
-      this.save()
       return
     }
 
     double minEstimation = Double.POSITIVE_INFINITY
     int index = 0, minIndex = 0
-
-    newTariffs.each { tariff ->
-      log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
-      if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
-        minEstimation = (double)Math.min(minEstimation,this.costEstimation(tariff))
-        minIndex = index
+    if (newTariffs.size()> 0) {
+      newTariffs.each { tariff ->
+        log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
+        if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
+          minEstimation = (double)Math.min(minEstimation,this.costEstimation(tariff))
+          minIndex = index
+        }
+        index++
       }
-      index++
-    }
-    log.info "Tariff:  ${newTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
+      log.info "Tariff:  ${newTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
 
-    subscriptions.each { sub ->
-      log.info "Equality: ${sub.tariff.tariffSpec} = ${newTariffs.getAt(minIndex).tariffSpec} "
-      if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
-        log.info "Existing subscription ${sub.toString()}"
-        int populationCount = sub.customersCommitted
-        this.subscribe(newTariffs.getAt(minIndex),  populationCount)
-        this.unsubscribe(sub, populationCount)
+      subscriptions.each { sub ->
+        log.info "Equality: ${sub.tariff.tariffSpec} = ${newTariffs.getAt(minIndex).tariffSpec} "
+        if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
+          log.info "Existing subscription ${sub.toString()}"
+          int populationCount = sub.customersCommitted
+          this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+          this.unsubscribe(sub, populationCount)
+        }
       }
-    }
-    this.save()
+      this.save()
+    }    
   }
 
   void possibilityEvaluationNewTariffs(List<Tariff> newTariffs)
@@ -346,7 +336,6 @@ class AbstractCustomer {
     // initial publication of default tariffs
     if (subscriptions == null || subscriptions.size() == 0) {
       subscribeDefault()
-      this.save()
       return
     }
     log.info "Tariffs: ${Tariff.list().toString()}"
@@ -371,7 +360,6 @@ class AbstractCustomer {
           int populationCount = sub.customersCommitted
           this.unsubscribe(sub, populationCount)
           this.subscribe(newTariffs.getAt(minIndex),  populationCount)
-
         }
       }
       this.save()
@@ -443,7 +431,7 @@ class AbstractCustomer {
     log.info "Possibility Vector: ${possibilities.toString()}"
     int index = randomizer.get((int)(randomizer.size()*Math.random()))
     log.info "Resulting Index = ${index}"
-    return 0
+    return index
 
   }
 

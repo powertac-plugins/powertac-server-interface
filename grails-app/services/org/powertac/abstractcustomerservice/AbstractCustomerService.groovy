@@ -56,7 +56,7 @@ class AbstractCustomerService implements TimeslotPhaseProcessor {
       assert(abstractCustomerInfo.save())
       def abstractCustomer = new AbstractCustomer(customerInfo: abstractCustomerInfo)
       abstractCustomer.init()
-      //abstractCustomer.subscribeDefault()
+      abstractCustomer.subscribeDefault()
       assert(abstractCustomer.save())
     }
   }
