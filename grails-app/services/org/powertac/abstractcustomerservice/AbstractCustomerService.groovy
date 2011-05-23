@@ -32,7 +32,7 @@ class AbstractCustomerService implements TimeslotPhaseProcessor
   def competitionControlService
 
   // JEC - this attribute is a property of a CustomerInfo. Why is it here?
-  int population = 1
+  int population = 0
 
   void init(PluginConfig config) 
   {
@@ -57,7 +57,7 @@ class AbstractCustomerService implements TimeslotPhaseProcessor
       assert(abstractCustomerInfo.save())
       def abstractCustomer = new AbstractCustomer(customerInfo: abstractCustomerInfo)
       abstractCustomer.init()
-      abstractCustomer.subscribeDefault()
+      //abstractCustomer.subscribeDefault()
       assert(abstractCustomer.save())
     }
   }
@@ -72,6 +72,7 @@ class AbstractCustomerService implements TimeslotPhaseProcessor
 	abstractCustomerList*.step()
       }  
       else {
+        // should never get here
 	log.info "Phase 2"
 	abstractCustomerList*.toString()
       }
