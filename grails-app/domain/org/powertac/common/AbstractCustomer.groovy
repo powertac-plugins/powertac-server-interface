@@ -132,7 +132,6 @@ class AbstractCustomer {
 
     this.addSubscription(tariffMarketService.subscribeToTariff(tariff, this, customerCount))
     log.info "${this.toString()} was subscribed to ${tariff.toString()} successfully."
-    this.save()
   }
 
   /** Unsubscribing certain subscription */
@@ -142,23 +141,13 @@ class AbstractCustomer {
     subscription.save()
     this.save()
   }
-  
-  /** Unsubscribing certain subscription */
-  void unsubscribe(Tariff tariff, int customerCount) {
-    TariffSubscription subscription = TariffSubscription.findByTariffAndCustomer(tariff,this)
-    
-    subscription.unsubscribe(customerCount)
-    log.info "${this.toString()} was unsubscribed from ${subscription.tariff.toString()} successfully."
-    subscription.save()
-    this.save()
-  }
-  
+
 
   /** Subscribing certain subscription */
   void addSubscription(TariffSubscription ts) {
     this.addToSubscriptions(ts)
     log.info "${this.toString()} was subscribed to the subscription ${ts.toString()} successfully."
-    ts.save()
+    //ts.save()
     this.save()
   }
 
@@ -316,6 +305,13 @@ class AbstractCustomer {
 
   void simpleEvaluationNewTariffs(List<Tariff> newTariffs) {
 
+ // if there are no current subscriptions, then this is the
+    // initial publication of default tariffs
+    if (subscriptions == null || subscriptions.size() == 0) {
+      subscribeDefault()
+      return
+    }
+    
     double minEstimation = Double.POSITIVE_INFINITY
     int index = 0, minIndex = 0
 
@@ -367,8 +363,9 @@ class AbstractCustomer {
       if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
         log.info "Existing subscription ${sub.toString()}"
         int populationCount = sub.customersCommitted
+        this.unsubscribe(sub, populationCount)
         this.subscribe(newTariffs.getAt(minIndex),  populationCount)  
-        //this.unsubscribe(sub, populationCount)
+        
       }
     }
     this.save()
