@@ -104,7 +104,7 @@ class AbstractCustomer {
 
     def listener = [publishNewTariffs:{tariffList -> possibilityEvaluationNewTariffs(tariffList) }] as NewTariffListener
     tariffMarketService.registerNewTariffListener(listener)
-    
+
     this.save()
   }
 
@@ -163,7 +163,7 @@ class AbstractCustomer {
 
   /** The first implementation of the power consumption function.
    *  I utilized the mean consumption of a neighborhood of households with a random variable */
-  void consumePower() 
+  void consumePower()
   {
     Timeslot ts =  Timeslot.currentTimeslot()
     double summary = 0
@@ -305,13 +305,14 @@ class AbstractCustomer {
 
   void simpleEvaluationNewTariffs(List<Tariff> newTariffs) {
 
- // if there are no current subscriptions, then this is the
+    // if there are no current subscriptions, then this is the
     // initial publication of default tariffs
     if (subscriptions == null || subscriptions.size() == 0) {
       subscribeDefault()
+      this.save()
       return
     }
-    
+
     double minEstimation = Double.POSITIVE_INFINITY
     int index = 0, minIndex = 0
 
@@ -324,13 +325,13 @@ class AbstractCustomer {
       index++
     }
     log.info "Tariff:  ${newTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
-    
+
     subscriptions.each { sub ->
       log.info "Equality: ${sub.tariff.tariffSpec} = ${newTariffs.getAt(minIndex).tariffSpec} "
       if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
         log.info "Existing subscription ${sub.toString()}"
         int populationCount = sub.customersCommitted
-        this.subscribe(newTariffs.getAt(minIndex),  populationCount)  
+        this.subscribe(newTariffs.getAt(minIndex),  populationCount)
         this.unsubscribe(sub, populationCount)
       }
     }
@@ -343,6 +344,7 @@ class AbstractCustomer {
     // initial publication of default tariffs
     if (subscriptions == null || subscriptions.size() == 0) {
       subscribeDefault()
+      this.save()
       return
     }
     log.info "Tariffs: ${Tariff.list().toString()}"
@@ -355,20 +357,24 @@ class AbstractCustomer {
         estimation.add(-(costEstimation(tariff)))
       }
     }
-    
-    int minIndex = logitPossibilityEstimation(estimation)
 
-    subscriptions.each { sub ->
-      log.info "Equality: ${sub.tariff.tariffSpec} = ${newTariffs.getAt(minIndex).tariffSpec} "
-      if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
-        log.info "Existing subscription ${sub.toString()}"
-        int populationCount = sub.customersCommitted
-        this.unsubscribe(sub, populationCount)
-        this.subscribe(newTariffs.getAt(minIndex),  populationCount)  
-        
+    println("Estimation size = " + estimation.size())
+    if (estimation.size()> 0) {
+      int minIndex = logitPossibilityEstimation(estimation)
+
+      subscriptions.each { sub ->
+        log.info "Equality: ${sub.tariff.tariffSpec} = ${newTariffs.getAt(minIndex).tariffSpec} "
+        if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
+          log.info "Existing subscription ${sub.toString()}"
+          int populationCount = sub.customersCommitted
+          this.unsubscribe(sub, populationCount)
+          this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+
+        }
       }
+      this.save()
     }
-    this.save()
+
   }
 
   double costEstimation(Tariff tariff)
@@ -395,7 +401,7 @@ class AbstractCustomer {
 
     double costSummary = 0
     double summary = 0, cumulativeSummary = 0
-    
+
     int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
     Instant base = timeService.currentTime - serial*TimeService.HOUR
     int day = (int) (serial / 24) + 1 // this will be changed to one or more random numbers
@@ -415,7 +421,7 @@ class AbstractCustomer {
 
   int logitPossibilityEstimation(Vector estimation) {
 
-    double lamda = 0.3 // 0 the random - 10 the logic
+    double lamda = 0.03 // 0 the random - 10 the logic
     double summedEstimations = 0
     Vector randomizer = new Vector()
     int[] possibilities = new int[estimation.size()]
@@ -431,12 +437,12 @@ class AbstractCustomer {
         randomizer.add(i)
       }
     }
-    
+
     log.info "Randomizer Vector: ${randomizer}"
     log.info "Possibility Vector: ${possibilities.toString()}"
     int index = randomizer.get((int)(randomizer.size()*Math.random()))
     log.info "Resulting Index = ${index}"
-    return index
+    return 0
 
   }
 
