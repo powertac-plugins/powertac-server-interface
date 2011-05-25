@@ -25,7 +25,8 @@ import org.powertac.common.interfaces.NewTariffListener
  * Abstract customer implementation
  * @author Antonios Chrysopoulos
  */
-class AbstractCustomer {
+class AbstractCustomer 
+{
   private static final log = LogFactory.getLog(this)
 
   def timeService
@@ -64,9 +65,10 @@ class AbstractCustomer {
 
   /** The subscriptions the customer is under at anytime. Must be at least one, beginning with the default tariff */
   static hasMany = [subscriptions: TariffSubscription]
+  
+  static fetchMode = [customerInfo:"eager"]
 
   static constraints = {
-
     id(nullable: false, blank: false)
     customerInfo(nullable: false)
     upperPowerCap (nullable: false, scale: Constants.DECIMALS)

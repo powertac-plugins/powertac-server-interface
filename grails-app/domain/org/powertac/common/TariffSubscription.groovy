@@ -36,8 +36,10 @@ class TariffSubscription {
   def timeService // autowire time service
   def accountingService // autowire accounting service
   def tariffMarketService
+  def tariffSubscriptionService
 
-  String id = IdGenerator.createId()
+  // no need for generated ID here
+  //String id = IdGenerator.createId()
   
   /** The customer who has this Subscription */
   AbstractCustomer customer
@@ -54,7 +56,8 @@ class TariffSubscription {
    *  are added chronologically at the end of the list, so the front of the list
    *  holds the oldest subscriptions - the ones that can be unsubscribed soonest
    *  without penalty. */
-  List expirations = []
+  // This field is offloaded to TariffSubscriptionService
+  //List expirations = []
   
   /** Total usage so far in the current day, needed to compute charges for
    *  tiered rates. */
@@ -65,19 +68,17 @@ class TariffSubscription {
   static belongsTo = [tariff: Tariff, customer: AbstractCustomer]
 
   static constraints = {
-    id(nullable: false, blank: false, unique: true)
+    //id(nullable: false, blank: false, unique: true)
     //competition(nullable: false)
     customer(nullable: false)
     customersCommitted(min: 0)
-    expirations(nullable: true)
+    //expirations(nullable: true)
   }
-  static mapping = {
-    id(generator: 'assigned')
-  }
+  //static mapping = {
+  //  id(generator: 'assigned')
+  //}
   
   static transients = ['expiredCustomerCount']
-  
-  // TODO: revoke
   
   /**
    * Subscribes some number of discrete customers. This is typically some portion of the population in a
@@ -95,9 +96,10 @@ class TariffSubscription {
     // we do this by adding an entry to end of list, or updating the entry at the end.
     // An entry is a pair [Instant, count]
     long minDuration = tariff.minDuration
-    if (minDuration > 0) {
+    //if (minDuration > 0) {
       // Compute the 00:00 Instant for the current time
       Instant start = timeService.truncateInstant(timeService.currentTime, TimeService.DAY)
+      List expirations = tariffSubscriptionService.getExpirations(this)
       if (expirations.size() > 0 &&
           expirations[expirations.size() - 1][0].millis == start + minDuration) {
         // update existing entry
@@ -107,7 +109,7 @@ class TariffSubscription {
         // need a new entry
         expirations.add([start + minDuration, customerCount])
       }
-    }
+    //}
     // post the signup bonus
     if (tariff.signupPayment != 0.0) {
       log.debug "signup bonus: ${customerCount} customers, total = ${customerCount * tariff.getSignupPayment()}"
@@ -127,11 +129,12 @@ class TariffSubscription {
     // first, make customerCount no larger than the subscription count
     customerCount = Math.min(customerCount, customersCommitted)
     // find the number of customers who can withdraw without penalty
-    int freeAgentCount = getExpiredCustomerCount()
+    List expirations = tariffSubscriptionService.getExpirations(this)
+    int freeAgentCount = getExpiredCustomerCount(expirations)
     int penaltyCount = Math.max (customerCount - freeAgentCount, 0)
     // update the expirations list
     int expCount = customerCount
-    while (expCount > 0) {
+    while (expCount > 0 && expirations[0] != null) {
       int cec = expirations[0][1]
       if (cec <= expCount) {
         expCount -= cec
@@ -214,7 +217,7 @@ class TariffSubscription {
    * Returns the number of individual customers who may withdraw from this
    * subscription without penalty.
    */
-  int getExpiredCustomerCount ()
+  int getExpiredCustomerCount (List expirations)
   {
     int cc = 0
     Instant today = timeService.truncateInstant(timeService.currentTime, TimeService.DAY)
