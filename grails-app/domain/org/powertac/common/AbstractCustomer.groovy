@@ -19,14 +19,12 @@ import java.util.List
 
 import org.apache.commons.logging.LogFactory
 import org.joda.time.Instant
-import org.powertac.common.interfaces.NewTariffListener
 
 /**
  * Abstract customer implementation
  * @author Antonios Chrysopoulos
  */
-class AbstractCustomer 
-{
+class AbstractCustomer {
   private static final log = LogFactory.getLog(this)
 
   def timeService
@@ -65,7 +63,7 @@ class AbstractCustomer
 
   /** The subscriptions the customer is under at anytime. Must be at least one, beginning with the default tariff */
   static hasMany = [subscriptions: TariffSubscription]
-  
+
   static fetchMode = [customerInfo:"eager"]
 
   static constraints = {
@@ -98,8 +96,8 @@ class AbstractCustomer
   {
     this.id = customerInfo.getId()
 
-    def listener = [publishNewTariffs:{tariffList -> possibilityEvaluationNewTariffs(tariffList) }] as NewTariffListener
-    tariffMarketService.registerNewTariffListener(listener)
+    //def listener = [publishNewTariffs:{tariffList -> possibilityEvaluationNewTariffs(tariffList)}] as NewTariffListener
+    //tariffMarketService?.registerNewTariffListener(listener)
 
     this.save()
   }
@@ -139,7 +137,7 @@ class AbstractCustomer
   }
 
   /** Subscribing certain subscription */
-  void addSubscription(TariffSubscription ts) 
+  void addSubscription(TariffSubscription ts)
   {
     this.addToSubscriptions(ts)
     log.info "${this.toString()} was subscribed to the subscription ${ts.toString()} successfully."
@@ -147,7 +145,7 @@ class AbstractCustomer
   }
 
   /** Unsubscribing certain subscription */
-  void removeSubscription(TariffSubscription ts) 
+  void removeSubscription(TariffSubscription ts)
   {
     this.removeFromSubscriptions(ts)
     log.info "${this.toString()} was unsubscribed from the subscription ${ts.toString()} successfully."
@@ -166,7 +164,7 @@ class AbstractCustomer
     subscriptions.each { sub ->
       if (ts == null) summary = getConsumptionByTimeslot(sub)
       else summary = getConsumptionByTimeslot(ts.serialNumber)
-      log.info " Consumption Load: ${summary} / ${subscriptions.size()} "
+      log.info "Consumption Load: ${summary} / ${subscriptions.size()} "
       sub.usePower(summary/subscriptions.size())
     }
   }
@@ -329,7 +327,7 @@ class AbstractCustomer
         }
       }
       this.save()
-    }    
+    }
   }
 
   void possibilityEvaluationNewTariffs(List<Tariff> newTariffs)
