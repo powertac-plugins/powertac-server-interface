@@ -21,6 +21,7 @@ import org.powertac.common.CustomerInfo
 import org.powertac.common.PluginConfig
 import org.powertac.common.enumerations.CustomerType
 import org.powertac.common.enumerations.PowerType
+import org.powertac.common.interfaces.NewTariffListener
 import org.powertac.common.interfaces.TimeslotPhaseProcessor
 
 
@@ -29,6 +30,7 @@ class AbstractCustomerService implements TimeslotPhaseProcessor {
 
   def timeService // autowire
   def competitionControlService
+  def tariffMarketService
 
   // JEC - this attribute is a property of a CustomerInfo. Why is it here?
   int population = 0
@@ -37,6 +39,9 @@ class AbstractCustomerService implements TimeslotPhaseProcessor {
   {
     competitionControlService?.registerTimeslotPhase(this, 1)
     //competitionControlService?.registerTimeslotPhase(this, 2)
+
+    def listener = [publishNewTariffs:{tariffList -> AbstractCustomer.list().each{ it.possibilityEvaluationNewTariffs(tariffList)}}] as NewTariffListener
+    tariffMarketService?.registerNewTariffListener(listener)
 
     Integer value = config.configuration['population']?.toInteger()
     if (value == null) {
@@ -60,6 +65,9 @@ class AbstractCustomerService implements TimeslotPhaseProcessor {
       assert(abstractCustomer.save())
     }
   }
+
+
+
 
   void activate(Instant now, int phase)
   {
