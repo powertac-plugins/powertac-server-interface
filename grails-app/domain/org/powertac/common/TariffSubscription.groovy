@@ -78,7 +78,7 @@ class TariffSubscription {
   //  id(generator: 'assigned')
   //}
   
-  static transients = ['expiredCustomerCount']
+  static transients = ['expiredCustomerCount', 'timeService', 'accountingService', 'tariffMarketService', 'tariffSubscriptionService']
   
   /**
    * Subscribes some number of discrete customers. This is typically some portion of the population in a
@@ -107,7 +107,7 @@ class TariffSubscription {
       }
       else {
         // need a new entry
-        expirations.add([start + minDuration, customerCount])
+        tariffSubscriptionService.addExpiration(this, [start + minDuration, customerCount])
       }
     //}
     // post the signup bonus
