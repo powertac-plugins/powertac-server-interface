@@ -26,7 +26,7 @@ class TariffSubscriptionService
 
   Map expirations = [:]
 
-  def getExpirations (TariffSubscription subscription)
+  List getExpirations (TariffSubscription subscription)
   {
     long subId = subscription.id
     if (expirations[subId] == null) {
@@ -34,5 +34,15 @@ class TariffSubscriptionService
       expirations[subId] = []
     }
     return expirations[subId]
+  }
+  
+  void addExpiration (TariffSubscription subscription, List data)
+  {
+    long subId = subscription.id
+    if (expirations[subId] == null) {
+      log.info "create expirations list for subscription ${subId}"
+      expirations[subId] = []
+    }
+    expirations[subId].add(data)
   }
 }
