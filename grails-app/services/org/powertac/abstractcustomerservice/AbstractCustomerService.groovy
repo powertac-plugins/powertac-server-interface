@@ -28,8 +28,9 @@ import org.powertac.common.interfaces.NewTariffListener
 import org.powertac.common.interfaces.TimeslotPhaseProcessor
 
 
-class AbstractCustomerService implements Customer, TimeslotPhaseProcessor {
-  static transactional = true
+class AbstractCustomerService implements TimeslotPhaseProcessor
+{
+  static transactional = false
 
   def timeService // autowire
   def competitionControlService
@@ -68,19 +69,17 @@ class AbstractCustomerService implements Customer, TimeslotPhaseProcessor {
       assert(abstractCustomer.save())
     }
   }
-
   
-  public List<CustomerInfo> generateCustomerInfoList(){
-    
+  public List<CustomerInfo> generateCustomerInfoList()
+  {
     List<CustomerInfo> result = []
     
-     AbstractCustomer.list().each{customer ->
-       result.add(customer.customerInfo)
-     }
+    AbstractCustomer.list().each { customer ->
+      result.add(customer.customerInfo)
+    }
     println(result)
     return result
-  };
-
+  }
 
   void activate(Instant now, int phase)
   {
