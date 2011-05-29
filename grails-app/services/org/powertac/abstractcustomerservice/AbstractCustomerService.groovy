@@ -15,17 +15,20 @@
  */
 package org.powertac.abstractcustomerservice
 
+import java.util.List;
+
 import org.joda.time.Instant
 import org.powertac.common.AbstractCustomer
 import org.powertac.common.CustomerInfo
 import org.powertac.common.PluginConfig
 import org.powertac.common.enumerations.CustomerType
 import org.powertac.common.enumerations.PowerType
+import org.powertac.common.interfaces.Customer
 import org.powertac.common.interfaces.NewTariffListener
 import org.powertac.common.interfaces.TimeslotPhaseProcessor
 
 
-class AbstractCustomerService implements TimeslotPhaseProcessor {
+class AbstractCustomerService implements Customer, TimeslotPhaseProcessor {
   static transactional = true
 
   def timeService // autowire
@@ -66,7 +69,17 @@ class AbstractCustomerService implements TimeslotPhaseProcessor {
     }
   }
 
-
+  
+  public List<CustomerInfo> generateCustomerInfoList(){
+    
+    List<CustomerInfo> result = []
+    
+     AbstractCustomer.list().each{customer ->
+       result.add(customer.customerInfo)
+     }
+    println(result)
+    return result
+  };
 
 
   void activate(Instant now, int phase)
