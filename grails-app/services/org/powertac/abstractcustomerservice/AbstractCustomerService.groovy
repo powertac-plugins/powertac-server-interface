@@ -15,6 +15,8 @@
  */
 package org.powertac.abstractcustomerservice
 
+import java.util.List;
+
 import org.joda.time.Instant
 import org.powertac.common.AbstractCustomer
 import org.powertac.common.CustomerInfo
@@ -68,14 +70,12 @@ class AbstractCustomerService implements Customer, TimeslotPhaseProcessor {
   }
 
   
-  public CustomerInfo[] generateCustomerInfoList(){
+  public List<CustomerInfo> generateCustomerInfoList(){
     
-    def result = new CustomerInfo[AbstractCustomer.count()]
-    def index = 0
+    List<CustomerInfo> result = []
     
      AbstractCustomer.list().each{customer ->
-       result[index]= customer.customerInfo
-       index++
+       result.add(customer.customerInfo)
      }
     println(result)
     return result
