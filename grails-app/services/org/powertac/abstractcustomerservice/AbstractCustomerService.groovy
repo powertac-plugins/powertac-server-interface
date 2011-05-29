@@ -21,11 +21,12 @@ import org.powertac.common.CustomerInfo
 import org.powertac.common.PluginConfig
 import org.powertac.common.enumerations.CustomerType
 import org.powertac.common.enumerations.PowerType
+import org.powertac.common.interfaces.Customer
 import org.powertac.common.interfaces.NewTariffListener
 import org.powertac.common.interfaces.TimeslotPhaseProcessor
 
 
-class AbstractCustomerService implements TimeslotPhaseProcessor {
+class AbstractCustomerService implements Customer, TimeslotPhaseProcessor {
   static transactional = true
 
   def timeService // autowire
@@ -66,7 +67,19 @@ class AbstractCustomerService implements TimeslotPhaseProcessor {
     }
   }
 
-
+  
+  public CustomerInfo[] generateCustomerInfoList(){
+    
+    def result = new CustomerInfo[AbstractCustomer.count()]
+    def index = 0
+    
+     AbstractCustomer.list().each{customer ->
+       result[index]= customer.customerInfo
+       index++
+     }
+    println(result)
+    return result
+  };
 
 
   void activate(Instant now, int phase)

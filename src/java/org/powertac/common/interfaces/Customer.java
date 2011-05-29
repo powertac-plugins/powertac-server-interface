@@ -44,5 +44,5 @@ public interface Customer
    * @see org.powertac.common.Customer
    * @return a customer object that contains customer master data (i.e. a generic description of the customer)
    */
-  public CustomerInfo generateCustomerInfo();
+  public CustomerInfo[] generateCustomerInfoList();
 }

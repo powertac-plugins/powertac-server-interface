@@ -19,12 +19,14 @@ import java.util.List
 
 import org.apache.commons.logging.LogFactory
 import org.joda.time.Instant
+import org.powertac.common.interfaces.Customer
 
 /**
  * Abstract customer implementation
  * @author Antonios Chrysopoulos
  */
-class AbstractCustomer {
+class AbstractCustomer 
+{
   private static final log = LogFactory.getLog(this)
 
   def timeService
