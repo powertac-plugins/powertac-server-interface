@@ -98,9 +98,6 @@ class AbstractCustomer
   {
     this.id = customerInfo.getId()
 
-    //def listener = [publishNewTariffs:{tariffList -> possibilityEvaluationNewTariffs(tariffList)}] as NewTariffListener
-    //tariffMarketService?.registerNewTariffListener(listener)
-
     this.save()
   }
 
@@ -125,16 +122,16 @@ class AbstractCustomer
 
   /** Subscribing certain subscription */
   void subscribe(Tariff tariff, int customerCount){
-
     this.addSubscription(tariffMarketService.subscribeToTariff(tariff, this, customerCount))
-    log.info "${this.toString()} was subscribed to ${tariff.toString()} successfully."
+    log.info "${this.toString()} was subscribed to ${tariff.toString()} successfully."    
   }
 
   /** Unsubscribing certain subscription */
   void unsubscribe(TariffSubscription subscription, int customerCount) {
     subscription.unsubscribe(customerCount)
     log.info "${this.toString()} was unsubscribed from ${subscription.tariff.toString()} successfully."
-    subscription.save()
+    if (subscription.customersCommitted == 0)removeSubscription(subscription)
+    else subscription.save()
     this.save()
   }
 
@@ -350,8 +347,8 @@ class AbstractCustomer
         estimation.add(-(costEstimation(tariff)))
       }
     }
-
-    println("Estimation size = " + estimation.size())
+    
+    println("Estimation size for ${this.toString()}= " + estimation.size())
     if (estimation.size()> 0) {
       int minIndex = logitPossibilityEstimation(estimation)
 
@@ -372,7 +369,7 @@ class AbstractCustomer
   {
     double costVariable = estimateVariableTariffPayment(tariff)
     double costFixed = estimateFixedTariffPayments(tariff)
-    return costVariable + costFixed
+    return costVariable + costFixed/100000
   }
 
   double estimateFixedTariffPayments(Tariff tariff)
