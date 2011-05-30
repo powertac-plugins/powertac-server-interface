@@ -44,8 +44,9 @@ class AbstractCustomerService implements TimeslotPhaseProcessor
     competitionControlService?.registerTimeslotPhase(this, 1)
     //competitionControlService?.registerTimeslotPhase(this, 2)
 
-    def listener = [publishNewTariffs:{tariffList -> AbstractCustomer.list().each{ it.possibilityEvaluationNewTariffs(tariffList)}}] as NewTariffListener
-    tariffMarketService?.registerNewTariffListener(listener)
+    //Implemented in each customer model not here.
+    //def listener = [publishNewTariffs:{tariffList -> AbstractCustomer.list().each{ it.possibilityEvaluationNewTariffs(tariffList)}}] as NewTariffListener
+    //tariffMarketService?.registerNewTariffListener(listener)
 
     Integer value = config.configuration['population']?.toInteger()
     if (value == null) {
