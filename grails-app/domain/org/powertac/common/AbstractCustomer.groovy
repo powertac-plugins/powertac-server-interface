@@ -348,7 +348,7 @@ class AbstractCustomer
       }
     }
     
-    println("Estimation size for ${this.toString()}= " + estimation.size())
+    log.debug("Estimation size for ${this.toString()}= " + estimation.size())
     if (estimation.size()> 0) {
       int minIndex = logitPossibilityEstimation(estimation)
 
