@@ -19,14 +19,12 @@ import java.util.List
 
 import org.apache.commons.logging.LogFactory
 import org.joda.time.Instant
-import org.powertac.common.interfaces.Customer
 
 /**
  * Abstract customer implementation
  * @author Antonios Chrysopoulos
  */
-class AbstractCustomer 
-{
+class AbstractCustomer {
   private static final log = LogFactory.getLog(this)
 
   def timeService
@@ -123,7 +121,7 @@ class AbstractCustomer
   /** Subscribing certain subscription */
   void subscribe(Tariff tariff, int customerCount){
     this.addSubscription(tariffMarketService.subscribeToTariff(tariff, this, customerCount))
-    log.info "${this.toString()} was subscribed to ${tariff.toString()} successfully."    
+    log.info "${this.toString()} was subscribed to ${tariff.toString()} successfully."
   }
 
   /** Unsubscribing certain subscription */
@@ -176,17 +174,17 @@ class AbstractCustomer
 
     log.info " Hour: ${hour} "
     for (int i = 0; i < population;i++){
-      if (hour < 7)
+      if (hour < Constants.MORNING_START_HOUR)
       {
-        ran = Math.random()
+        ran = Constants.MEAN_NIGHT_CONSUMPTION + Math.random()
         summary = summary + ran
       }
-      else if (hour < 18){
-        ran = 3 + Math.random()
+      else if (hour < Constants.EVENING_START_HOUR){
+        ran = Constants.MEAN_MORNING_CONSUMPTION + Math.random()
         summary = summary + ran
       }
       else {
-        ran = 2 + Math.random()
+        ran = Constants.MEAN_EVENING_CONSUMPTION + Math.random()
         summary = summary + ran
       }
       log.info "Summary: ${summary}"
@@ -201,17 +199,17 @@ class AbstractCustomer
     log.info "Hour: ${hour} "
 
     for (int i = 0; i < sub.customersCommitted;i++){
-      if (hour < 7)
+      if (hour < Constants.MORNING_START_HOUR)
       {
-        ran = Math.random()
+        ran = Constants.MEAN_NIGHT_CONSUMPTION + Math.random()
         summary = summary + ran
       }
-      else if (hour < 18){
-        ran = 3 + Math.random()
+      else if (hour < Constants.EVENING_START_HOUR){
+        ran = Constants.MEAN_MORNING_CONSUMPTION + Math.random()
         summary = summary + ran
       }
       else {
-        ran = 2 + Math.random()
+        ran = Constants.MEAN_EVENING_CONSUMPTION + Math.random()
         summary = summary + ran
       }
       log.info "Summary: ${summary}"
@@ -347,7 +345,6 @@ class AbstractCustomer
         estimation.add(-(costEstimation(tariff)))
       }
     }
-    
     log.debug("Estimation size for ${this.toString()}= " + estimation.size())
     if (estimation.size()> 0) {
       int minIndex = logitPossibilityEstimation(estimation)
@@ -369,7 +366,7 @@ class AbstractCustomer
   {
     double costVariable = estimateVariableTariffPayment(tariff)
     double costFixed = estimateFixedTariffPayments(tariff)
-    return costVariable + costFixed/100000
+    return (costVariable + costFixed)/Constants.MILLION
   }
 
   double estimateFixedTariffPayments(Tariff tariff)
@@ -378,7 +375,7 @@ class AbstractCustomer
     double minDuration
 
     // When there is not a Minimum Duration of the contract, you cannot divide with the duration because you don't know it.
-    if (tariff.getMinDuration() == 0) minDuration = 5 * TimeService.DAY
+    if (tariff.getMinDuration() == 0) minDuration = Constants.MEAN_TARIFF_DURATION * TimeService.DAY
     else minDuration = tariff.getMinDuration()
 
     log.info("Minimum Duration: ${minDuration}")
@@ -392,10 +389,10 @@ class AbstractCustomer
 
     int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
     Instant base = timeService.currentTime - serial*TimeService.HOUR
-    int day = (int) (serial / 24) + 1 // this will be changed to one or more random numbers
+    int day = (int) (serial / Constants.HOURS_OF_DAY) + 1 // this will be changed to one or more random numbers
     Instant now = base + day * TimeService.DAY
 
-    for (int i=0;i < 24;i++){
+    for (int i=0;i < Constants.HOURS_OF_DAY;i++){
       summary = getConsumptionByTimeslot(i)
       cumulativeSummary += summary
       costSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
@@ -409,18 +406,21 @@ class AbstractCustomer
 
   int logitPossibilityEstimation(Vector estimation) {
 
-    double lamda = 0.03 // 0 the random - 10 the logic
+    double lamda = 3 // 0 the random - 10 the logic
     double summedEstimations = 0
     Vector randomizer = new Vector()
     int[] possibilities = new int[estimation.size()]
+    println(possibilities.size())
+
 
     for (int i=0;i < estimation.size();i++){
-      summedEstimations += Math.pow(2.7,lamda*estimation.get(i))
+      summedEstimations += Math.pow(Constants.EPSILON,lamda*estimation.get(i))
+      "Cost variable: ${estimation.get(i)}"
       log.info"Summary of Estimation: ${summedEstimations}"
     }
 
     for (int i = 0;i < estimation.size();i++){
-      possibilities[i] = (int)(100 *(Math.pow(2.7,lamda*estimation.get(i)) / summedEstimations))
+      possibilities[i] = (int)(Constants.PERCENTAGE *(Math.pow(Constants.EPSILON,lamda*estimation.get(i)) / summedEstimations))
       for (int j=0;j < possibilities[i]; j++){
         randomizer.add(i)
       }
