@@ -54,6 +54,7 @@ class AbstractCustomer {
   /** measures how sun intensity changes translate into load /generation changes of the customer */
   BigDecimal sunToPowerConversion = 0.0
 
+  
   //TODO: Possibly add parameters as the ones below that provide descriptive statistical information on historic power consumption / production of the customer
   /*
    BigDecimal annualPowerAvg // >0: customer is on average a consumer; <0 customer is on average a producer
@@ -303,6 +304,10 @@ class AbstractCustomer {
 
     double minEstimation = Double.POSITIVE_INFINITY
     int index = 0, minIndex = 0
+     
+    //adds current subscribed tariffs for reevaluation
+    newTariffs.addAll(subscriptions?.tariff)
+        
     if (newTariffs.size()> 0) {
       newTariffs.each { tariff ->
         log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
@@ -337,7 +342,10 @@ class AbstractCustomer {
     }
     log.info "Tariffs: ${Tariff.list().toString()}"
     Vector estimation = new Vector()
-
+   
+    //adds current subscribed tariffs for reevaluation
+    newTariffs.addAll(subscriptions?.tariff)
+    
     newTariffs.each { tariff ->
       log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType} Tariff Expired : ${tariff.isExpired()}"
 
@@ -407,7 +415,7 @@ class AbstractCustomer {
 
   int logitPossibilityEstimation(Vector estimation) {
 
-    double lamda = 3 // 0 the random - 10 the logic
+    double lamda = 50 // 0 the random - 10 the logic
     double summedEstimations = 0
     Vector randomizer = new Vector()
     int[] possibilities = new int[estimation.size()]
