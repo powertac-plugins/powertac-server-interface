@@ -19,6 +19,7 @@ import java.util.List
 
 import org.apache.commons.logging.LogFactory
 import org.joda.time.Instant
+import org.powertac.common.enumerations.PowerType
 
 /**
  * Abstract customer implementation
@@ -236,44 +237,66 @@ class AbstractCustomer {
   //============================= TARIFF SELECTION PROCESS =================================================
 
   /** The first implementation of the changing subscription function.
-   * There are going to be many cases in the more detailed and complex models. */
-  void changeSubscription(Tariff tariff, boolean flag)
+   *  Here we just put the tariff we want to change and the whole population 
+   * is moved to another random tariff.
+   * @param tariff
+   */
+  void changeSubscription(Tariff tariff)
   {
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
     int populationCount = ts.customersCommitted
-    this.unsubscribe(ts, populationCount)
+    unsubscribe(ts, populationCount)
 
-    this.selectTariff(flag).each { newTariff ->
-      this.addToSubscriptions(tariffMarketService.subscribeToTariff(newTariff, this, populationCount))
-    }
+    def newTariff = selectTariff(tariff.tariffSpec.powerType) 
+    subscribe(newTariff,populationCount)
     this.save()
   }
+  
+   /** In this overloaded implementation of the changing subscription function,
+    *  Here we just put the tariff we want to change and the whole population 
+    * is moved to another random tariff.
+    * @param tariff
+    */
+  void changeSubscription(Tariff tariff, Tariff newTariff)
+  {
+    TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
+    int populationCount = ts.customersCommitted
+    unsubscribe(ts, populationCount)
+    subscribe(newTariff,populationCount)
+    this.save()
+  }
+  
+  
+ /** In this overloaded implementation of the changing subscription function,
+  * Here we just put the tariff we want to change and amount of the population 
+  * we want to move to the new tariff.
+  * @param tariff
+  */
+  void changeSubscription(Tariff tariff, Tariff newTariff, int populationCount)
+  {
+    TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
+    unsubscribe(ts, populationCount)
+    subscribe(newTariff,populationCount)
+    this.save()
+  }
+ 
 
   /** The first implementation of the tariff selection function.
-   * This is a random chooser of the available tariffs, totally insensitive*/
-  List<Tariff> selectTariff(boolean flag) {
-    List<Tariff> available
-    List<Tariff> result = []
+   * This is a random chooser of the available tariffs, totally insensitive.*/
+  Tariff selectTariff(PowerType powerType) {
+    Tariff result = new Tariff()
+    List<Tariff> available = []
     int ran, index
-    customerInfo.powerTypes.each { powerType ->
-      if (flag) {
-        available = tariffMarketService.getActiveTariffList(powerType)
-        log.info "Available Tariffs : ${available.toString()} "
-        index = available.indexOf(tariffMarketService.getDefaultTariff(powerType))
-        log.info "Index of Default Tariff: ${index} "
-      }
-      else {
-        available = publishedTariffs
-        index = available.indexOf(this.subscriptions?.tariff)
-        log.info "Index of Current Tariff: ${index} "
-      }
-
-      ran = index
-      while ( ran == index) {
-        ran = available.size() * Math.random()
-      }
-      result << available.get(ran)
+    available = tariffMarketService.getActiveTariffList(powerType)
+    log.info "Available Tariffs for ${powerType}: ${available.toString()} "
+    index = available.indexOf(tariffMarketService.getDefaultTariff(powerType))
+    log.info "Index of Default Tariff: ${index} "
+      
+    ran = index
+    while ( ran == index) {
+      ran = available.size() * Math.random()
     }
+    result = available.get(ran)
     return result
   }
 
