@@ -54,6 +54,7 @@ class AbstractCustomer {
   /** measures how sun intensity changes translate into load /generation changes of the customer */
   BigDecimal sunToPowerConversion = 0.0
 
+
   //TODO: Possibly add parameters as the ones below that provide descriptive statistical information on historic power consumption / production of the customer
   /*
    BigDecimal annualPowerAvg // >0: customer is on average a consumer; <0 customer is on average a producer
@@ -303,8 +304,16 @@ class AbstractCustomer {
 
     double minEstimation = Double.POSITIVE_INFINITY
     int index = 0, minIndex = 0
-    if (newTariffs.size()> 0) {
-      newTariffs.each { tariff ->
+
+    //adds current subscribed tariffs for reevaluation
+    def evaluationTariffs = new ArrayList(newTariffs)
+    Collections.copy(evaluationTariffs,newTariffs)
+    evaluationTariffs.addAll(subscriptions?.tariff)
+
+
+    log.debug("Estimation size for ${this.toString()}= " + evaluationTariffs.size())
+    if (evaluationTariffs.size()> 1) {
+      evaluationTariffs.each { tariff ->
         log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
         if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
           minEstimation = (double)Math.min(minEstimation,this.costEstimation(tariff))
@@ -312,14 +321,14 @@ class AbstractCustomer {
         }
         index++
       }
-      log.info "Tariff:  ${newTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
+      log.info "Tariff:  ${evaluationTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
 
       subscriptions.each { sub ->
-        log.info "Equality: ${sub.tariff.tariffSpec} = ${newTariffs.getAt(minIndex).tariffSpec} "
-        if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
+        log.info "Equality: ${sub.tariff.tariffSpec} = ${evaluationTariffs.getAt(minIndex).tariffSpec} "
+        if (!(sub.tariff.tariffSpec == evaluationTariffs.getAt(minIndex).tariffSpec)) {
           log.info "Existing subscription ${sub.toString()}"
           int populationCount = sub.customersCommitted
-          this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+          this.subscribe(evaluationTariffs.getAt(minIndex),  populationCount)
           this.unsubscribe(sub, populationCount)
         }
       }
@@ -338,24 +347,29 @@ class AbstractCustomer {
     log.info "Tariffs: ${Tariff.list().toString()}"
     Vector estimation = new Vector()
 
-    newTariffs.each { tariff ->
-      log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType} Tariff Expired : ${tariff.isExpired()}"
+    //adds current subscribed tariffs for reevaluation
+    def evaluationTariffs = new ArrayList(newTariffs)
+    Collections.copy(evaluationTariffs,newTariffs)
+    evaluationTariffs.addAll(subscriptions?.tariff)
 
-      if (!tariff.isExpired() && customerInfo.powerTypes.find{tariff.powerType == it}) {
-        estimation.add(-(costEstimation(tariff)))
+    log.debug("Estimation size for ${this.toString()}= " + evaluationTariffs.size())
+    if (evaluationTariffs.size()> 1) {
+      evaluationTariffs.each { tariff ->
+        log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType} Tariff Expired : ${tariff.isExpired()}"
+        if (!tariff.isExpired() && customerInfo.powerTypes.find{tariff.powerType == it}) {
+          estimation.add(-(costEstimation(tariff)))
+        }
+        else estimation.add(Double.NEGATIVE_INFINITY)
       }
-    }
-    log.debug("Estimation size for ${this.toString()}= " + estimation.size())
-    if (estimation.size()> 0) {
       int minIndex = logitPossibilityEstimation(estimation)
 
       subscriptions.each { sub ->
-        log.info "Equality: ${sub.tariff.tariffSpec} = ${newTariffs.getAt(minIndex).tariffSpec} "
-        if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
+        log.info "Equality: ${sub.tariff.tariffSpec} = ${evaluationTariffs.getAt(minIndex).tariffSpec} "
+        if (!(sub.tariff.tariffSpec == evaluationTariffs.getAt(minIndex).tariffSpec)) {
           log.info "Existing subscription ${sub.toString()}"
           int populationCount = sub.customersCommitted
           this.unsubscribe(sub, populationCount)
-          this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+          this.subscribe(evaluationTariffs.getAt(minIndex),  populationCount)
         }
       }
       this.save()
@@ -406,12 +420,10 @@ class AbstractCustomer {
 
   int logitPossibilityEstimation(Vector estimation) {
 
-    double lamda = 3 // 0 the random - 10 the logic
+    double lamda = 50 // 0 the random - 10 the logic
     double summedEstimations = 0
     Vector randomizer = new Vector()
     int[] possibilities = new int[estimation.size()]
-    println(possibilities.size())
-
 
     for (int i=0;i < estimation.size();i++){
       summedEstimations += Math.pow(Constants.EPSILON,lamda*estimation.get(i))
