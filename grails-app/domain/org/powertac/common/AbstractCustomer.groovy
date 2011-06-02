@@ -321,14 +321,14 @@ class AbstractCustomer {
         }
         index++
       }
-      log.info "Tariff:  ${newTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
+      log.info "Tariff:  ${evaluationTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
 
       subscriptions.each { sub ->
-        log.info "Equality: ${sub.tariff.tariffSpec} = ${newTariffs.getAt(minIndex).tariffSpec} "
-        if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
+        log.info "Equality: ${sub.tariff.tariffSpec} = ${evaluationTariffs.getAt(minIndex).tariffSpec} "
+        if (!(sub.tariff.tariffSpec == evaluationTariffs.getAt(minIndex).tariffSpec)) {
           log.info "Existing subscription ${sub.toString()}"
           int populationCount = sub.customersCommitted
-          this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+          this.subscribe(evaluationTariffs.getAt(minIndex),  populationCount)
           this.unsubscribe(sub, populationCount)
         }
       }
@@ -356,21 +356,21 @@ class AbstractCustomer {
     if (evaluationTariffs.size()> 1) {
       evaluationTariffs.each { tariff ->
         log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType} Tariff Expired : ${tariff.isExpired()}"
-
         if (!tariff.isExpired() && customerInfo.powerTypes.find{tariff.powerType == it}) {
           estimation.add(-(costEstimation(tariff)))
         }
+        else estimation.add(Double.NEGATIVE_INFINITY)
       }
 
       int minIndex = logitPossibilityEstimation(estimation)
 
       subscriptions.each { sub ->
-        log.info "Equality: ${sub.tariff.tariffSpec} = ${newTariffs.getAt(minIndex).tariffSpec} "
-        if (!(sub.tariff.tariffSpec == newTariffs.getAt(minIndex).tariffSpec)) {
+        log.info "Equality: ${sub.tariff.tariffSpec} = ${evaluationTariffs.getAt(minIndex).tariffSpec} "
+        if (!(sub.tariff.tariffSpec == evaluationTariffs.getAt(minIndex).tariffSpec)) {
           log.info "Existing subscription ${sub.toString()}"
           int populationCount = sub.customersCommitted
           this.unsubscribe(sub, populationCount)
-          this.subscribe(newTariffs.getAt(minIndex),  populationCount)
+          this.subscribe(evaluationTariffs.getAt(minIndex),  populationCount)
         }
       }
       this.save()
