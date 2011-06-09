@@ -5,7 +5,7 @@ grails.project.test.reports.dir = "target/test-reports"
 
 // local plugin dependencies --
 // replace with standard install-plugin before release
-//grails.plugin.location.PowertacCommon = "../powertac-common"
+grails.plugin.location.PowertacCommon = "../powertac-common"
 
 grails.project.dependency.resolution = {
   // inherit Grails' default dependencies
