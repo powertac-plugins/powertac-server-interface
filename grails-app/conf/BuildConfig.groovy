@@ -38,6 +38,7 @@ grails.project.dependency.resolution = {
   }
   
   plugins {
-    build ':joda-time:1.1'
+    build (':joda-time:1.1') { transitive = false }
+    build (':powertac-common:0.10')
   }
 }
