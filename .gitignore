@@ -8,6 +8,9 @@
 # Deployment directories
 target/
 web-app/WEB-INF/classes/
+*.zip
+*.sha1
+plugin.xml
 
 # OS generated files 
 .DS_Store?
