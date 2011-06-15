@@ -247,16 +247,16 @@ class AbstractCustomer {
     int populationCount = ts.customersCommitted
     unsubscribe(ts, populationCount)
 
-    def newTariff = selectTariff(tariff.tariffSpec.powerType) 
+    def newTariff = selectTariff(tariff.tariffSpec.powerType)
     subscribe(newTariff,populationCount)
     this.save()
   }
-  
-   /** In this overloaded implementation of the changing subscription function,
-    *  Here we just put the tariff we want to change and the whole population 
-    * is moved to another random tariff.
-    * @param tariff
-    */
+
+  /** In this overloaded implementation of the changing subscription function,
+   *  Here we just put the tariff we want to change and the whole population 
+   * is moved to another random tariff.
+   * @param tariff
+   */
   void changeSubscription(Tariff tariff, Tariff newTariff)
   {
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
@@ -265,13 +265,13 @@ class AbstractCustomer {
     subscribe(newTariff,populationCount)
     this.save()
   }
-  
-  
- /** In this overloaded implementation of the changing subscription function,
-  * Here we just put the tariff we want to change and amount of the population 
-  * we want to move to the new tariff.
-  * @param tariff
-  */
+
+
+  /** In this overloaded implementation of the changing subscription function,
+   * Here we just put the tariff we want to change and amount of the population 
+   * we want to move to the new tariff.
+   * @param tariff
+   */
   void changeSubscription(Tariff tariff, Tariff newTariff, int populationCount)
   {
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
@@ -279,7 +279,7 @@ class AbstractCustomer {
     subscribe(newTariff,populationCount)
     this.save()
   }
- 
+
 
   /** The first implementation of the tariff selection function.
    * This is a random chooser of the available tariffs, totally insensitive.*/
@@ -291,7 +291,7 @@ class AbstractCustomer {
     log.info "Available Tariffs for ${powerType}: ${available.toString()} "
     index = available.indexOf(tariffMarketService.getDefaultTariff(powerType))
     log.info "Index of Default Tariff: ${index} "
-      
+
     ran = index
     while ( ran == index) {
       ran = available.size() * Math.random()
@@ -469,7 +469,9 @@ class AbstractCustomer {
 
   }
 
+
   void step(){
+    println("Timeslot: " + timeService.currentTime + " Customer: " + this.toString())
     this.checkRevokedSubscriptions()
     this.consumePower()
   }
