@@ -15,16 +15,34 @@
  */
 package org.powertac.common
 
+import java.util.List;
+
+import org.powertac.common.interfaces.InitializationService
+
 /**
  * Stores expiration array data for TariffSubscription instances
  * that hibernate is ignoring.
  * @author John Collins
  */
 class TariffSubscriptionService
+  implements InitializationService
 {
   static transactional = false
 
   Map expirations = [:]
+
+  @Override
+  public void setDefaults ()
+  {
+    // nothing to do here    
+  }
+
+  @Override
+  public String initialize (Competition competition, List<String> completedInits)
+  {
+    expirations = [:]
+    return 'TariffSubscriptionService'
+  }
 
   List getExpirations (TariffSubscription subscription)
   {
