@@ -38,29 +38,29 @@ class AbstractCustomer {
   CustomerInfo customerInfo
 
   /** >0: max power consumption (think consumer with fuse limit); <0: min power production (think nuclear power plant with min output) */
-  BigDecimal upperPowerCap = 100.0
+  double upperPowerCap = 100.0
 
   /** >0: min power consumption (think refrigerator); <0: max power production (think power plant with max capacity) */
-  BigDecimal lowerPowerCap = 0.0
+  double lowerPowerCap = 0.0
 
   /** >=0 - gram CO2 per kW/h */
-  BigDecimal carbonEmissionRate = 0.0
+  double carbonEmissionRate = 0.0
 
   /** measures how wind changes translate into load / generation changes of the customer */
-  BigDecimal windToPowerConversion = 0.0
+  double windToPowerConversion = 0.0
 
   /** measures how temperature changes translate into load / generation changes of the customer */
-  BigDecimal tempToPowerConversion = 0.0
+  double tempToPowerConversion = 0.0
 
   /** measures how sun intensity changes translate into load /generation changes of the customer */
-  BigDecimal sunToPowerConversion = 0.0
+  double sunToPowerConversion = 0.0
 
 
   //TODO: Possibly add parameters as the ones below that provide descriptive statistical information on historic power consumption / production of the customer
   /*
-   BigDecimal annualPowerAvg // >0: customer is on average a consumer; <0 customer is on average a producer
-   private BigDecimal minResponsiveness // define factor characterizing minimal responsiveness to price signals, i.e. "elasticity"
-   private BigDecimal maxResponsiveness;   // define factor characterizing max responsiveness to price signals, i.e. "elasticity"
+   double annualPowerAvg // >0: customer is on average a consumer; <0 customer is on average a producer
+   private double minResponsiveness // define factor characterizing minimal responsiveness to price signals, i.e. "elasticity"
+   private double maxResponsiveness;   // define factor characterizing max responsiveness to price signals, i.e. "elasticity"
    */
 
   /** The subscriptions the customer is under at anytime. Must be at least one, beginning with the default tariff */
@@ -443,7 +443,7 @@ class AbstractCustomer {
 
   int logitPossibilityEstimation(Vector estimation) {
 
-    double lamda = 250000 // 0 the random - 10 the logic
+    double lamda = 2500 // 0 the random - 10 the logic
     double summedEstimations = 0
     Vector randomizer = new Vector()
     int[] possibilities = new int[estimation.size()]
