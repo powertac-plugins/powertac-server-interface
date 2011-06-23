@@ -76,39 +76,39 @@ class AbstractProducer extends AbstractCustomer{
       return
     }
 
-    double minEstimation = Double.POSITIVE_INFINITY
-    int index = 0, minIndex = 0
+    double maxEstimation = Double.NEGATIVE_INFINITY
+    int index = 0, maxIndex = 0
 
     //adds current subscribed tariffs for reevaluation
     def evaluationTariffs = new ArrayList(newTariffs)
     Collections.copy(evaluationTariffs,newTariffs)
     evaluationTariffs.addAll(subscriptions?.tariff)
 
-
     log.debug("Estimation size for ${this.toString()}= " + evaluationTariffs.size())
     if (evaluationTariffs.size()> 1) {
       evaluationTariffs.each { tariff ->
         log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType}"
         if (tariff.isExpired() == false && customerInfo.powerTypes.find{tariff.powerType == it} ){
-          minEstimation = (double)Math.min(minEstimation,this.costEstimation(tariff))
-          minIndex = index
+          maxEstimation = (double)Math.max(maxEstimation,this.paymentEstimation(tariff))
+          maxIndex = index
         }
         index++
       }
-      log.info "Tariff:  ${evaluationTariffs.getAt(minIndex).toString()} Estimation = ${minEstimation} "
+      log.info "Tariff:  ${evaluationTariffs.getAt(maxIndex).toString()} Estimation = ${maxEstimation} "
 
       subscriptions.each { sub ->
-        log.info "Equality: ${sub.tariff.tariffSpec} = ${evaluationTariffs.getAt(minIndex).tariffSpec} "
-        if (!(sub.tariff.tariffSpec == evaluationTariffs.getAt(minIndex).tariffSpec)) {
+        log.info "Equality: ${sub.tariff.tariffSpec} = ${evaluationTariffs.getAt(maxIndex).tariffSpec} "
+        if (!(sub.tariff.tariffSpec == evaluationTariffs.getAt(maxIndex).tariffSpec)) {
           log.info "Existing subscription ${sub.toString()}"
           int populationCount = sub.customersCommitted
-          this.subscribe(evaluationTariffs.getAt(minIndex),  populationCount)
+          this.subscribe(evaluationTariffs.getAt(maxIndex),  populationCount)
           this.unsubscribe(sub, populationCount)
         }
       }
       this.save()
     }
   }
+
 
   void possibilityEvaluationNewTariffs(List<Tariff> newTariffs)
   {
@@ -118,9 +118,9 @@ class AbstractProducer extends AbstractCustomer{
       subscribeDefault()
       return
     }
+
     log.info "Tariffs: ${Tariff.list().toString()}"
     Vector estimation = new Vector()
-
     //adds current subscribed tariffs for reevaluation
     def evaluationTariffs = new ArrayList(newTariffs)
     Collections.copy(evaluationTariffs,newTariffs)
@@ -131,30 +131,29 @@ class AbstractProducer extends AbstractCustomer{
       evaluationTariffs.each { tariff ->
         log.info "Tariff : ${tariff.toString()} Tariff Type : ${tariff.powerType} Tariff Expired : ${tariff.isExpired()}"
         if (!tariff.isExpired() && customerInfo.powerTypes.find{tariff.powerType == it}) {
-          estimation.add(-(costEstimation(tariff)))
+          estimation.add(paymentEstimation(tariff))
         }
-        else estimation.add(Double.NEGATIVE_INFINITY)
+        else estimation.add(Double.POSITIVE_INFINITY)
       }
-      int minIndex = logitPossibilityEstimation(estimation)
-
+      int maxIndex = logitPossibilityEstimation(estimation)
       subscriptions.each { sub ->
-        log.info "Equality: ${sub.tariff.tariffSpec} = ${evaluationTariffs.getAt(minIndex).tariffSpec} "
-        if (!(sub.tariff.tariffSpec == evaluationTariffs.getAt(minIndex).tariffSpec)) {
+        log.info "Equality: ${sub.tariff.tariffSpec} = ${evaluationTariffs.getAt(maxIndex).tariffSpec} "
+        if (!(sub.tariff.tariffSpec == evaluationTariffs.getAt(maxIndex).tariffSpec)) {
           log.info "Existing subscription ${sub.toString()}"
           int populationCount = sub.customersCommitted
           this.unsubscribe(sub, populationCount)
-          this.subscribe(evaluationTariffs.getAt(minIndex),  populationCount)
+          this.subscribe(evaluationTariffs.getAt(maxIndex),  populationCount)
         }
       }
       this.save()
     }
   }
 
-  double costEstimation(Tariff tariff)
+  double paymentEstimation(Tariff tariff)
   {
-    double costVariable = estimateVariableTariffPayment(tariff)
-    double costFixed = estimateFixedTariffPayments(tariff)
-    return (costVariable + costFixed)/Constants.MILLION
+    double paymentVariable = estimateVariableTariffPayment(tariff)
+    double paymentFixed = estimateFixedTariffPayments(tariff)
+    return (paymentVariable + paymentFixed)/Constants.MILLION
   }
 
   double estimateFixedTariffPayments(Tariff tariff)
@@ -172,7 +171,7 @@ class AbstractProducer extends AbstractCustomer{
 
   double estimateVariableTariffPayment(Tariff tariff){
 
-    double costSummary = 0
+    double paymentSummary = 0
     double summary = 0, cumulativeSummary = 0
 
     int serial = ((timeService.currentTime.millis - timeService.base) / TimeService.HOUR)
@@ -181,43 +180,39 @@ class AbstractProducer extends AbstractCustomer{
     Instant now = base + day * TimeService.DAY
 
     for (int i=0;i < Constants.HOURS_OF_DAY;i++){
-      summary = getConsumptionByTimeslot(i)
+      summary = getProductionByTimeslot(i)
       cumulativeSummary += summary
-      costSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
-      log.info "Time:  ${now.toString()} costSummary: ${costSummary} "
+      paymentSummary += tariff.getUsageCharge(now,summary,cumulativeSummary)
+      log.info "Time:  ${now.toString()} paymentSummary: ${paymentSummary} "
       now = now + TimeService.HOUR
     }
-    log.info "Variable cost Summary: ${costSummary}"
-    return costSummary
+    log.info "Variable payment Summary: ${paymentSummary}"
+    return paymentSummary
 
   }
 
   int logitPossibilityEstimation(Vector estimation) {
-
     double lamda = 250000 // 0 the random - 10 the logic
     double summedEstimations = 0
     Vector randomizer = new Vector()
+    log.info(estimation.toString())
     int[] possibilities = new int[estimation.size()]
-
     for (int i=0;i < estimation.size();i++){
       summedEstimations += Math.pow(Constants.EPSILON,lamda*estimation.get(i))
-      "Cost variable: ${estimation.get(i)}"
+      "Payment variable: ${estimation.get(i)}"
       log.info"Summary of Estimation: ${summedEstimations}"
     }
-
     for (int i = 0;i < estimation.size();i++){
       possibilities[i] = (int)(Constants.PERCENTAGE *(Math.pow(Constants.EPSILON,lamda*estimation.get(i)) / summedEstimations))
       for (int j=0;j < possibilities[i]; j++){
         randomizer.add(i)
       }
     }
-
     log.info "Randomizer Vector: ${randomizer}"
     log.info "Possibility Vector: ${possibilities.toString()}"
     int index = randomizer.get((int)(randomizer.size()*Math.random()))
     log.info "Resulting Index = ${index}"
     return index
-
   }
 
   void step(){
