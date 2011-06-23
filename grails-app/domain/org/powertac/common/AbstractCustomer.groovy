@@ -71,8 +71,8 @@ class AbstractCustomer {
   static constraints = {
     id(nullable: false, blank: false)
     customerInfo(nullable: false)
-    upperPowerCap (nullable: false, scale: Constants.DECIMALS)
-    lowerPowerCap (nullable: false, scale: Constants.DECIMALS)
+    upperPowerCap (scale: Constants.DECIMALS)
+    lowerPowerCap (scale: Constants.DECIMALS)
   }
 
   static mapping = { id (generator: 'assigned') }
