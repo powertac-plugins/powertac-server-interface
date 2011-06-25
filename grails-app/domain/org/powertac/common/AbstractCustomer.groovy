@@ -32,7 +32,7 @@ class AbstractCustomer {
   def tariffMarketService
 
   /** The id of the Abstract Customer */
-  String id
+  String custId
 
   /** The Customer specifications*/
   CustomerInfo customerInfo
@@ -56,26 +56,17 @@ class AbstractCustomer {
   double sunToPowerConversion = 0.0
 
 
-  //TODO: Possibly add parameters as the ones below that provide descriptive statistical information on historic power consumption / production of the customer
-  /*
-   double annualPowerAvg // >0: customer is on average a consumer; <0 customer is on average a producer
-   private double minResponsiveness // define factor characterizing minimal responsiveness to price signals, i.e. "elasticity"
-   private double maxResponsiveness;   // define factor characterizing max responsiveness to price signals, i.e. "elasticity"
-   */
-
   /** The subscriptions the customer is under at anytime. Must be at least one, beginning with the default tariff */
   static hasMany = [subscriptions: TariffSubscription]
 
   static fetchMode = [customerInfo:"eager"]
 
   static constraints = {
-    id(nullable: false, blank: false)
+    custId(nullable: false, blank: false)
     customerInfo(nullable: false)
     upperPowerCap (scale: Constants.DECIMALS)
     lowerPowerCap (scale: Constants.DECIMALS)
   }
-
-  static mapping = { id (generator: 'assigned') }
 
   static transients = ['population']
 
@@ -85,8 +76,7 @@ class AbstractCustomer {
     return customerInfo.getName()
   }
 
-  int getPopulation ()
-  {
+  int getPopulation () {
     return customerInfo.population
   }
 
@@ -96,7 +86,7 @@ class AbstractCustomer {
    * Subscribe to the default tariff for the beginning of the game */
   void init()
   {
-    this.id = customerInfo.getId()
+    this.custId = customerInfo.getId()
 
     this.save()
   }
