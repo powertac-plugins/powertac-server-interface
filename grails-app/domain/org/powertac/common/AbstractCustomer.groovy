@@ -32,36 +32,29 @@ class AbstractCustomer {
   def tariffMarketService
 
   /** The id of the Abstract Customer */
-  String id
+  String custId
 
   /** The Customer specifications*/
   CustomerInfo customerInfo
 
   /** >0: max power consumption (think consumer with fuse limit); <0: min power production (think nuclear power plant with min output) */
-  BigDecimal upperPowerCap = 100.0
+  double upperPowerCap = 100.0
 
   /** >0: min power consumption (think refrigerator); <0: max power production (think power plant with max capacity) */
-  BigDecimal lowerPowerCap = 0.0
+  double lowerPowerCap = 0.0
 
   /** >=0 - gram CO2 per kW/h */
-  BigDecimal carbonEmissionRate = 0.0
+  double carbonEmissionRate = 0.0
 
   /** measures how wind changes translate into load / generation changes of the customer */
-  BigDecimal windToPowerConversion = 0.0
+  double windToPowerConversion = 0.0
 
   /** measures how temperature changes translate into load / generation changes of the customer */
-  BigDecimal tempToPowerConversion = 0.0
+  double tempToPowerConversion = 0.0
 
   /** measures how sun intensity changes translate into load /generation changes of the customer */
-  BigDecimal sunToPowerConversion = 0.0
+  double sunToPowerConversion = 0.0
 
-
-  //TODO: Possibly add parameters as the ones below that provide descriptive statistical information on historic power consumption / production of the customer
-  /*
-   BigDecimal annualPowerAvg // >0: customer is on average a consumer; <0 customer is on average a producer
-   private BigDecimal minResponsiveness // define factor characterizing minimal responsiveness to price signals, i.e. "elasticity"
-   private BigDecimal maxResponsiveness;   // define factor characterizing max responsiveness to price signals, i.e. "elasticity"
-   */
 
   /** The subscriptions the customer is under at anytime. Must be at least one, beginning with the default tariff */
   static hasMany = [subscriptions: TariffSubscription]
@@ -69,13 +62,11 @@ class AbstractCustomer {
   static fetchMode = [customerInfo:"eager"]
 
   static constraints = {
-    id(nullable: false, blank: false)
+    custId(nullable: false, blank: false)
     customerInfo(nullable: false)
-    upperPowerCap (nullable: false, scale: Constants.DECIMALS)
-    lowerPowerCap (nullable: false, scale: Constants.DECIMALS)
+    upperPowerCap (scale: Constants.DECIMALS)
+    lowerPowerCap (scale: Constants.DECIMALS)
   }
-
-  static mapping = { id (generator: 'assigned') }
 
   static transients = ['population']
 
@@ -85,8 +76,7 @@ class AbstractCustomer {
     return customerInfo.getName()
   }
 
-  int getPopulation ()
-  {
+  int getPopulation () {
     return customerInfo.population
   }
 
@@ -96,7 +86,7 @@ class AbstractCustomer {
    * Subscribe to the default tariff for the beginning of the game */
   void init()
   {
-    this.id = customerInfo.getId()
+    this.custId = customerInfo.getId()
 
     this.save()
   }
@@ -247,16 +237,16 @@ class AbstractCustomer {
     int populationCount = ts.customersCommitted
     unsubscribe(ts, populationCount)
 
-    def newTariff = selectTariff(tariff.tariffSpec.powerType) 
+    def newTariff = selectTariff(tariff.tariffSpec.powerType)
     subscribe(newTariff,populationCount)
     this.save()
   }
-  
-   /** In this overloaded implementation of the changing subscription function,
-    *  Here we just put the tariff we want to change and the whole population 
-    * is moved to another random tariff.
-    * @param tariff
-    */
+
+  /** In this overloaded implementation of the changing subscription function,
+   *  Here we just put the tariff we want to change and the whole population 
+   * is moved to another random tariff.
+   * @param tariff
+   */
   void changeSubscription(Tariff tariff, Tariff newTariff)
   {
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
@@ -265,13 +255,13 @@ class AbstractCustomer {
     subscribe(newTariff,populationCount)
     this.save()
   }
-  
-  
- /** In this overloaded implementation of the changing subscription function,
-  * Here we just put the tariff we want to change and amount of the population 
-  * we want to move to the new tariff.
-  * @param tariff
-  */
+
+
+  /** In this overloaded implementation of the changing subscription function,
+   * Here we just put the tariff we want to change and amount of the population 
+   * we want to move to the new tariff.
+   * @param tariff
+   */
   void changeSubscription(Tariff tariff, Tariff newTariff, int populationCount)
   {
     TariffSubscription ts = TariffSubscription.findByTariffAndCustomer(tariff, this)
@@ -279,7 +269,7 @@ class AbstractCustomer {
     subscribe(newTariff,populationCount)
     this.save()
   }
- 
+
 
   /** The first implementation of the tariff selection function.
    * This is a random chooser of the available tariffs, totally insensitive.*/
@@ -291,7 +281,7 @@ class AbstractCustomer {
     log.info "Available Tariffs for ${powerType}: ${available.toString()} "
     index = available.indexOf(tariffMarketService.getDefaultTariff(powerType))
     log.info "Index of Default Tariff: ${index} "
-      
+
     ran = index
     while ( ran == index) {
       ran = available.size() * Math.random()
@@ -443,7 +433,7 @@ class AbstractCustomer {
 
   int logitPossibilityEstimation(Vector estimation) {
 
-    double lamda = 50 // 0 the random - 10 the logic
+    double lamda = 2500 // 0 the random - 10 the logic
     double summedEstimations = 0
     Vector randomizer = new Vector()
     int[] possibilities = new int[estimation.size()]
@@ -469,7 +459,9 @@ class AbstractCustomer {
 
   }
 
+
   void step(){
+    println("Timeslot: " + timeService.currentTime + " Customer: " + this.toString())
     this.checkRevokedSubscriptions()
     this.consumePower()
   }
