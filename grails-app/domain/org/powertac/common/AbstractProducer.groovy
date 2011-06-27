@@ -15,10 +15,12 @@
  */
 package org.powertac.common
 
-import java.util.List
+import java.util.Collections
+import java.util.Random
 
 import org.apache.commons.logging.LogFactory
 import org.joda.time.Instant
+import org.powertac.common.enumerations.PowerType
 
 /**
  * Abstract customer implementation
@@ -42,6 +44,46 @@ class AbstractProducer extends AbstractCustomer{
       log.info "Production Load: ${summary} / ${subscriptions.size()} "
 
       sub.usePower(-(summary/subscriptions.size()))
+    }
+  }
+
+  /** In this function, the broker calls for a certain amount of energy as it has predicted and
+   *  the producer produces this amount in return */
+  void producePower(Broker broker, double amount)
+  {
+
+    List<TariffSubscription> subs = []
+
+    subscriptions.each { sub ->
+      if (sub.tariff.broker == broker) subs.add(sub)
+    }
+
+    if (subs.size() == 0) log.info "Not subscribed to broker ${broker.toString()}"
+    else {
+      subs.each { sub ->
+        log.info "Production Load: ${amount}/${subs.size()} "
+        sub.usePower(-(amount/subs.size()))
+      }
+    }
+  }
+
+  /** In this function, the broker calls for a certain amount of energy as it has predicted and
+   *  the producer produces this amount in return */
+  void producePower(Tariff tariff, double amount)
+  {
+
+    List<TariffSubscription> subs = []
+
+    subscriptions.each { sub ->
+      if (sub.tariff == tariff) subs.add(sub)
+    }
+
+    if (subs.size() == 0) log.info "Not subscribed to broker ${broker.toString()}"
+    else {
+      subs.each { sub ->
+        log.info "Production Load: ${amount}/${subs.size()} "
+        sub.usePower(-(amount/subs.size()))
+      }
     }
   }
 
