@@ -459,9 +459,14 @@ class AbstractCustomer {
 
   }
 
+  /** This function returns the bootstrap data of the certain customer in the correct form
+   * 
+   * @return
+   */
+  def getBootstrapData(){}
+
 
   void step(){
-    println("Timeslot: " + timeService.currentTime + " Customer: " + this.toString())
     this.checkRevokedSubscriptions()
     this.consumePower()
   }
