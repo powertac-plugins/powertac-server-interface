@@ -461,7 +461,6 @@ class AbstractCustomer {
 
 
   void step(){
-    println("Timeslot: " + timeService.currentTime + " Customer: " + this.toString())
     this.checkRevokedSubscriptions()
     this.consumePower()
   }
