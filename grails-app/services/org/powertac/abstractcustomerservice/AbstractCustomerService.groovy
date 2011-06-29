@@ -79,6 +79,18 @@ class AbstractCustomerService implements TimeslotPhaseProcessor {
     return result
   }
 
+  public List<Map> generateBootstrapData()
+  {
+    List<Map> result = []
+
+    AbstractCustomer.list().each { customer ->
+      Map bootstrap = [:]
+      bootstrap[customer.customerInfo.name] = customer.getBootstrapData()
+      result.add(bootstrap)
+    }
+    return result
+  }
+
   void activate(Instant now, int phase)
   {
     log.info "Activate"
