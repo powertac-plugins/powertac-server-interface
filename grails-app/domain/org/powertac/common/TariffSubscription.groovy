@@ -113,10 +113,11 @@ class TariffSubscription {
     // post the signup bonus
     if (tariff.signupPayment != 0.0) {
       log.debug "signup bonus: ${customerCount} customers, total = ${customerCount * tariff.getSignupPayment()}"
-      accountingService.addTariffTransaction(TariffTransactionType.SIGNUP,
-          tariff, customer.customerInfo, customerCount, 0.0,
-          customerCount * tariff.getSignupPayment())
     }
+    accountingService.addTariffTransaction(TariffTransactionType.SIGNUP,
+                                           tariff, customer.customerInfo, 
+                                           customerCount, 0.0,
+                                           customerCount * tariff.getSignupPayment())
     this.save()
   }
   
