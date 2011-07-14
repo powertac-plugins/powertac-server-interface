@@ -206,7 +206,7 @@ class TariffSubscription {
       tariff.addPeriodicPayment()
       accountingService.addTariffTransaction(TariffTransactionType.PERIODIC,
           tariff, customer.customerInfo, customersCommitted, 0.0,
-          customersCommitted * tariff.getPeriodicPayment())
+          customersCommitted * tariff.getPeriodicPayment() / 24.0)
     }
     if (!this.validate()) {
       this.errors.allErrors.each { log.error(it.toString()) }
