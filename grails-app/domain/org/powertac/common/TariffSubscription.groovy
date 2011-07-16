@@ -191,6 +191,9 @@ class TariffSubscription {
    */
   void usePower (double quantity)
   {
+    if (customer.customerInfo == null) {
+      log.error "null customerInfo for $customer"
+    }
     // generate the usage transaction
     def txType = quantity < 0 ? TariffTransactionType.PRODUCE: TariffTransactionType.CONSUME
     accountingService.addTariffTransaction(txType, tariff,
